@@ -15,8 +15,8 @@ type TranslationRepo struct {
 	*postgres.Postgres
 }
 
-// New -.
-func New(pg *postgres.Postgres) *TranslationRepo {
+// NewTranslation -.
+func NewTranslation(pg *postgres.Postgres) *TranslationRepo {
 	return &TranslationRepo{pg}
 }
 

@@ -21,7 +21,7 @@ type test struct {
 	err  error
 }
 
-func translation(t *testing.T) (*usecase.TranslationUseCase, *MockTranslationRepo, *MockTranslationWebAPI) {
+func translation(t *testing.T) (*usecase.TaskUseCase, *MockTranslationRepo, *MockTranslationWebAPI) {
 	t.Helper()
 
 	mockCtl := gomock.NewController(t)
@@ -30,7 +30,7 @@ func translation(t *testing.T) (*usecase.TranslationUseCase, *MockTranslationRep
 	repo := NewMockTranslationRepo(mockCtl)
 	webAPI := NewMockTranslationWebAPI(mockCtl)
 
-	translation := usecase.New(repo, webAPI)
+	translation := usecase.NewTranslation(repo, webAPI)
 
 	return translation, repo, webAPI
 }

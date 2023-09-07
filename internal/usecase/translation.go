@@ -13,8 +13,8 @@ type TranslationUseCase struct {
 	webAPI TranslationWebAPI
 }
 
-// New -.
-func New(r TranslationRepo, w TranslationWebAPI) *TranslationUseCase {
+// NewTranslation -.
+func NewTranslation(r TranslationRepo, w TranslationWebAPI) *TranslationUseCase {
 	return &TranslationUseCase{
 		repo:   r,
 		webAPI: w,

@@ -11,7 +11,4 @@ logger:
 
 postgres:
   pool_max: 2
-
-rabbitmq:
-  rpc_server_exchange: 'rpc_server'
-  rpc_client_exchange: 'rpc_client'
+  url: 'postgres://user:pass@localhost:5432/postgres'

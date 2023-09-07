@@ -16,10 +16,28 @@ type (
 		History(context.Context) ([]entity.Translation, error)
 	}
 
+	// Task
+	Task interface {
+		CreateTask(context.Context, *CreateTaskRequest) error
+		// List(context.Context) ([]*entity.Task, error)
+		// Get(context.Context, string) (*entity.Task, error)
+		// Update(context.Context, string, *entity.Task) error
+		// Delete(context.Context, string) error
+	}
+
 	// TranslationRepo -.
 	TranslationRepo interface {
 		Store(context.Context, entity.Translation) error
 		GetHistory(context.Context) ([]entity.Translation, error)
+	}
+
+	// TaskRepo -.
+	TaskRepo interface {
+		CreateTask(context.Context, *entity.Task) error
+		// List(context.Context) ([]*entity.Task, error)
+		// Get(context.Context, string) (*entity.Task, error)
+		// Update(context.Context, string, *entity.Task) error
+		// Delete(context.Context, string) error
 	}
 
 	// TranslationWebAPI -.
