@@ -68,19 +68,19 @@ func initKafkaTopics(ctx context.Context, cfg *config.Config, kafkaConn *kafka.C
 
 	logger.Infof("(established new kafka controller connection) controllerURI: %s", controllerURI)
 
-	bankAccountAggregateTopic := GetKafkaAggregateTypeTopic(&KafkaEventsBusConfig{
+	taskAggregateTopic := GetKafkaAggregateTypeTopic(&KafkaEventsBusConfig{
 		Topic:             cfg.Topic,
 		TopicPrefix:       cfg.TopicPrefix,
 		Partitions:        cfg.Partitions,
 		ReplicationFactor: cfg.ReplicationFactor,
 	}, "Task")
 
-	if err := conn.CreateTopics(bankAccountAggregateTopic); err != nil {
+	if err := conn.CreateTopics(taskAggregateTopic); err != nil {
 		logger.Warn("kafkaConn.CreateTopics", err)
 		return
 	}
 
-	logger.Infof("(kafka topics created or already exists): %+v", []kafka.TopicConfig{bankAccountAggregateTopic})
+	logger.Infof("(kafka topics created or already exists): %+v", []kafka.TopicConfig{taskAggregateTopic})
 }
 
 func GetKafkaAggregateTypeTopic(cfg *KafkaEventsBusConfig, aggregateType string) kafka.TopicConfig {

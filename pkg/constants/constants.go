@@ -74,9 +74,6 @@ const (
 
 	MessageSize = "MessageSize"
 
-	BankAccountIndex = "aggregateID"
-	BankAccountId    = "BankAccountId"
-
 	KafkaHeaders = "kafkaHeaders"
 
 	Tcp = "tcp"

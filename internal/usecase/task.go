@@ -2,19 +2,25 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/evrone/go-clean-template/internal/aggregate"
+	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/evrone/go-clean-template/internal/entity"
+	internalEvent "github.com/evrone/go-clean-template/internal/events"
+	"github.com/evrone/go-clean-template/pkg/es"
+	"github.com/google/uuid"
 )
 
 type TaskUseCase struct {
-	repo TaskRepo
+	eventSerializer *domain.EventSerializer
+	eventBus        *es.KafkaEventsBus
 }
 
 // NewTask -.
-func NewTask(r TaskRepo) *TaskUseCase {
+func NewTask(eventSerializer *domain.EventSerializer, eventBus *es.KafkaEventsBus) *TaskUseCase {
 	return &TaskUseCase{
-		repo: r,
+		eventSerializer: eventSerializer,
+		eventBus:        eventBus,
 	}
 }
 
@@ -27,15 +33,30 @@ type CreateTaskRequest struct {
 }
 
 // CreateTask - Create task.
-func (uc *TaskUseCase) CreateTask(ctx context.Context, task *CreateTaskRequest) error {
-	if err := uc.repo.CreateTask(ctx, &entity.Task{
-		Title:       task.Title,
-		Name:        task.Name,
-		Image:       task.Image,
-		Description: task.Description,
-		Status:      task.Status,
-	}); err != nil {
-		return fmt.Errorf("TaskUseCase - CreateTask - s.repo.Create: %w", err)
+func (uc *TaskUseCase) CreateTask(ctx context.Context, request *CreateTaskRequest) error {
+	// Push to Kafka
+	taskAggregate := aggregate.NewTaskAggregate(uuid.Must(uuid.NewRandom()).String())
+	taskAggregate.Task = &entity.Task{
+		Title:       request.Title,
+		Name:        request.Name,
+		Image:       request.Image,
+		Description: request.Description,
+		Status:      request.Status,
+	}
+	taskCreatedEvent := &internalEvent.TaskCreatedEventV1{
+		Title:       request.Title,
+		Name:        request.Name,
+		Image:       request.Image,
+		Description: request.Description,
+		Status:      request.Status,
+	}
+	event, err := uc.eventSerializer.SerializeEvent(taskAggregate, taskCreatedEvent)
+	if err != nil {
+		return err
+	}
+
+	if err := uc.eventBus.ProcessEvents(ctx, []es.Event{event}); err != nil {
+		return err
 	}
 
 	return nil

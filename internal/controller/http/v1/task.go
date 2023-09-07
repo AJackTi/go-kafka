@@ -55,7 +55,7 @@ func (r *taskRoutes) CreateTask(c *gin.Context) {
 	})
 	if err != nil {
 		r.l.Error(err, "http - v1 - create_task")
-		errorResponse(c, http.StatusInternalServerError, "database problems")
+		errorResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}

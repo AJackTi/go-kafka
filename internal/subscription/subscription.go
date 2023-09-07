@@ -3,16 +3,26 @@ package subscription
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/evrone/go-clean-template/config"
+	"github.com/evrone/go-clean-template/internal/domain"
+	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/evrone/go-clean-template/internal/events"
+	"github.com/evrone/go-clean-template/internal/repo"
+	"github.com/evrone/go-clean-template/pkg/es"
 	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/segmentio/kafka-go"
 )
 
 const (
 	TaskAggregateType string = "Task"
+)
+
+var (
+	ErrUnknownEventType = errors.New("unknown event type")
 )
 
 // AggregateType type of the Aggregate
@@ -36,8 +46,24 @@ type Event struct {
 }
 
 type subscription struct {
-	log logger.Logger
-	cfg *config.Config
+	log             logger.Logger
+	cfg             *config.Config
+	eventSerializer *domain.EventSerializer
+	taskRepo        *repo.TaskRepo
+}
+
+func NewSubscription(
+	log logger.Logger,
+	cfg *config.Config,
+	eventSerializer *domain.EventSerializer,
+	taskRepo *repo.TaskRepo,
+) *subscription {
+	return &subscription{
+		log:             log,
+		cfg:             cfg,
+		eventSerializer: eventSerializer,
+		taskRepo:        taskRepo,
+	}
 }
 
 func GetTopicName(eventStorePrefix string, aggregateType string) string {
@@ -62,7 +88,7 @@ func (s *subscription) ProcessMessagesErrGroup(ctx context.Context, r *kafka.Rea
 
 		switch m.Topic {
 		case GetTopicName(s.cfg.KafkaPublisherConfig.TopicPrefix, TaskAggregateType):
-			s.handleBankAccountEvents(ctx, r, m)
+			s.handleTaskEvents(ctx, r, m)
 		}
 	}
 }
@@ -71,7 +97,7 @@ func Unmarshal(data []byte, v any) error {
 	return json.Unmarshal(data, v)
 }
 
-func (s *subscription) handleBankAccountEvents(ctx context.Context, r *kafka.Reader, m kafka.Message) {
+func (s *subscription) handleTaskEvents(ctx context.Context, r *kafka.Reader, m kafka.Message) {
 	var events []Event
 	if err := Unmarshal(m.Value, &events); err != nil {
 		s.commitErrMessage(ctx, r, m)
@@ -86,21 +112,54 @@ func (s *subscription) handleBankAccountEvents(ctx context.Context, r *kafka.Rea
 	s.commitMessage(ctx, r, m)
 }
 
-// TODO: Handle subscription
 func (s *subscription) handle(ctx context.Context, r *kafka.Reader, m kafka.Message, event Event) error {
-	// err := s.projection.When(ctx, event)
-	// if err != nil {
-	// 	s.log.Errorf("MongoSubscription When err: %v", err)
+	if err := s.when(ctx, es.Event{
+		EventID:       event.EventID,
+		AggregateID:   event.AggregateID,
+		EventType:     es.EventType(event.EventType),
+		AggregateType: es.AggregateType(event.AggregateType),
+		Version:       event.Version,
+		Data:          event.Data,
+		Metadata:      event.Metadata,
+		Timestamp:     event.Timestamp,
+	}); err != nil {
+		return err
+	}
 
-	// 	recreateErr := s.recreateProjection(ctx, event)
-	// 	if recreateErr != nil {
-	// 		return tracing.TraceWithErr(span, errors.Wrapf(recreateErr, "recreateProjection err: %v", err))
-	// 	}
-
-	// 	s.commitErrMessage(ctx, r, m)
-	// 	return tracing.TraceWithErr(span, errors.Wrapf(err, "When type: %s, aggregateID: %s", event.GetEventType(), event.GetAggregateID()))
-	// }
-
-	// s.log.Infof("MongoSubscription <<<commit>>> event: %s", event.String())
 	return nil
+}
+
+func (s *subscription) when(ctx context.Context, esEvent es.Event) error {
+	var (
+		err  error
+		task *entity.Task
+	)
+
+	deserializedEvent, err := s.eventSerializer.DeserializeEvent(esEvent)
+	if err != nil {
+		return err
+	}
+
+	switch deserializedEvent.(type) {
+	case *events.TaskCreatedEventV1:
+		task, err = unmarshalToTask(string(esEvent.Data))
+		if err == nil {
+			return s.taskRepo.CreateTask(ctx, task)
+		}
+
+	default:
+		return ErrUnknownEventType
+	}
+
+	return err
+}
+
+func unmarshalToTask(jsonStr string) (*entity.Task, error) {
+	var response entity.Task
+	err := json.Unmarshal([]byte(jsonStr), &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
