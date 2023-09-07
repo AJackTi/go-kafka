@@ -12,9 +12,11 @@ import (
 type Interface interface {
 	Debug(message interface{}, args ...interface{})
 	Info(message string, args ...interface{})
+	Infof(template string, args ...interface{})
 	Warn(message string, args ...interface{})
 	Error(message interface{}, args ...interface{})
 	Fatal(message interface{}, args ...interface{})
+	Errorf(template string, args ...interface{})
 }
 
 // Logger -.
@@ -61,6 +63,11 @@ func (l *Logger) Info(message string, args ...interface{}) {
 	l.log(message, args...)
 }
 
+// Infof uses fmt.Sprintf to log a templated message.
+func (l *Logger) Infof(template string, args ...interface{}) {
+	l.log(template, args...)
+}
+
 // Warn -.
 func (l *Logger) Warn(message string, args ...interface{}) {
 	l.log(message, args...)
@@ -73,6 +80,15 @@ func (l *Logger) Error(message interface{}, args ...interface{}) {
 	}
 
 	l.msg("error", message, args...)
+}
+
+// Errorf -.
+func (l *Logger) Errorf(template string, args ...interface{}) {
+	if l.logger.GetLevel() == zerolog.DebugLevel {
+		l.Debug(template, args...)
+	}
+
+	l.msg("error", template, args...)
 }
 
 // Fatal -.

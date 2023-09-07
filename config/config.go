@@ -9,10 +9,12 @@ import (
 type (
 	// Config -.
 	Config struct {
-		App  `yaml:"app"`
-		HTTP `yaml:"http"`
-		Log  `yaml:"logger"`
-		PG   `yaml:"postgres"`
+		App                  `yaml:"app"`
+		HTTP                 `yaml:"http"`
+		Log                  `yaml:"logger"`
+		PG                   `yaml:"postgres"`
+		Kafka                `yaml:"kafka"`
+		KafkaPublisherConfig `yaml:"kafkaPublisherConfig"`
 	}
 
 	// App -.
@@ -28,13 +30,26 @@ type (
 
 	// Log -.
 	Log struct {
-		Level string `env-required:"true" yaml:"log_level"   env:"LOG_LEVEL"`
+		Level string `env-required:"true" yaml:"logLevel"   env:"LOG_LEVEL"`
 	}
 
 	// PG -.
 	PG struct {
-		PoolMax int    `env-required:"true" yaml:"pool_max" env:"PG_POOL_MAX"`
+		PoolMax int    `env-required:"true" yaml:"poolMax" env:"PG_POOL_MAX"`
 		URL     string `env-required:"true"                 env:"PG_URL"`
+	}
+
+	Kafka struct {
+		Brokers    []string `env-required:"true" yaml:"brokers" env:"BROKERS"`
+		GroupID    string   `env-required:"true" yaml:"groupID" env:"BROKERS"`
+		InitTopics bool     `env-required:"true" yaml:"initTopics" env:"INIT_TOPICS"`
+	}
+
+	KafkaPublisherConfig struct {
+		Topic             string `env-required:"true" yaml:"topic" 				env:"TOPIC"`
+		TopicPrefix       string `env-required:"true" yaml:"topicPrefix" 		env:"TOPIC_PREFIX"`
+		Partitions        int    `env-required:"true" yaml:"partitions" 		env:"PARTITIONS"`
+		ReplicationFactor int    `env-required:"true" yaml:"replicationFactor" env:"REPLICATION_FACTOR"`
 	}
 )
 

@@ -22,7 +22,7 @@ import (
 // @version     1.0
 // @host        localhost:8080
 // @BasePath    /v1
-func NewRouter(handler *gin.Engine, l logger.Interface, translation usecase.Translation, task usecase.Task) {
+func NewRouter(handler *gin.Engine, log logger.Interface, task usecase.Task) {
 	// Options
 	handler.Use(gin.Logger())
 	handler.Use(gin.Recovery())
@@ -38,8 +38,8 @@ func NewRouter(handler *gin.Engine, l logger.Interface, translation usecase.Tran
 	handler.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	// Routers
-	h := handler.Group("/v1")
+	handlerGroup := handler.Group("/v1")
 	{
-		newTaskRoutes(h, task, l)
+		newTaskRoutes(handlerGroup, task, log)
 	}
 }

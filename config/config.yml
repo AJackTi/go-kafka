@@ -3,12 +3,29 @@ app:
   version: '1.0.0'
 
 http:
-  port: '8080'
+  port: '8000'
 
 logger:
-  log_level: 'debug'
-  rollbar_env: 'go-clean-template'
+  logLevel: 'debug'
+  rollbarEnv: 'go-clean-template'
 
 postgres:
-  pool_max: 2
+  poolMax: 2
   url: 'postgres://user:pass@localhost:5432/postgres'
+
+kafka:
+  brokers: ["localhost:9092", "localhost:9093"]
+  groupID: go_clean_architecture
+  initTopics: true
+
+kafkaTopics:
+  eventCreated:
+    topicName: task_created
+    partitions: 10
+    replicationFactor: 1
+
+kafkaPublisherConfig:
+  topic: event_created
+  topicPrefix: eventstore
+  partitions: 10
+  replicationFactor: 1
