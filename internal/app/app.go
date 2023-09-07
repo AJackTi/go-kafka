@@ -73,4 +73,19 @@ func Run(cfg *config.Config) {
 	if err != nil {
 		logger.Error(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
 	}
+
+	// consumerGroup := kafkaClient.NewConsumerGroup(cfg.Kafka.Brokers, cfg.GroupID, *logger)
+	go func() {
+		// err := consumerGroup.ConsumeTopicWithErrGroup(
+		// 	context.Background(),
+		// 	getConsumerGroupTopics(cfg),
+		// 	10,
+		// 	mongoSubscription.ProcessMessagesErrGroup,
+		// )
+		// if err != nil {
+		// 	a.log.Errorf("(mongoConsumerGroup ConsumeTopicWithErrGroup) err: %v", err)
+		// 	cancel()
+		// 	return
+		// }
+	}()
 }

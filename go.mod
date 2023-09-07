@@ -1,6 +1,6 @@
 module github.com/evrone/go-clean-template
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Conight/go-googletrans v0.0.0-20200929083318-176776d061cb
@@ -13,13 +13,13 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.2.6
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/prometheus/client_golang v1.11.0
+	github.com/rs/zerolog v1.30.0
 	github.com/segmentio/kafka-go v0.4.42
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.8.1
 	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2
 	github.com/swaggo/gin-swagger v1.3.3
 	github.com/swaggo/swag v1.7.6
-	go.uber.org/zap v1.25.0
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 )
 
@@ -78,12 +78,11 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.26.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
-	github.com/rs/zerolog v1.30.0 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/goleak v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect

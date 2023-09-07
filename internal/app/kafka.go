@@ -95,7 +95,7 @@ func getConsumerGroupTopics(cfg *config.Config) []string {
 	logger := logger.New(cfg.Log.Level)
 
 	topics := []string{
-		GetTopicName(cfg.KafkaPublisherConfig.TopicPrefix, string("Task")),
+		GetTopicName(cfg.KafkaPublisherConfig.TopicPrefix, TaskAggregateType),
 	}
 
 	logger.Infof("(Consumer Topics) topics: %+v", topics)

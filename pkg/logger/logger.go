@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/evrone/go-clean-template/pkg/constants"
 	"github.com/rs/zerolog"
 )
 
@@ -14,9 +16,12 @@ type Interface interface {
 	Info(message string, args ...interface{})
 	Infof(template string, args ...interface{})
 	Warn(message string, args ...interface{})
+	Warnf(template string, args ...interface{})
 	Error(message interface{}, args ...interface{})
 	Fatal(message interface{}, args ...interface{})
 	Errorf(template string, args ...interface{})
+	KafkaProcessMessage(topic string, partition int, message []byte, workerID int, offset int64, time time.Time)
+	KafkaLogCommittedMessage(topic string, partition int, offset int64)
 }
 
 // Logger -.
@@ -73,6 +78,11 @@ func (l *Logger) Warn(message string, args ...interface{}) {
 	l.log(message, args...)
 }
 
+// Warnf uses fmt.Sprintf to log a templated message.
+func (l *Logger) Warnf(template string, args ...interface{}) {
+	l.log(template, args...)
+}
+
 // Error -.
 func (l *Logger) Error(message interface{}, args ...interface{}) {
 	if l.logger.GetLevel() == zerolog.DebugLevel {
@@ -104,6 +114,23 @@ func (l *Logger) log(message string, args ...interface{}) {
 	} else {
 		l.logger.Info().Msgf(message, args...)
 	}
+}
+func (l *Logger) KafkaProcessMessage(topic string, partition int, message []byte, workerID int, offset int64, time time.Time) {
+	l.logger.Info().
+		Str(constants.Topic, topic).
+		Int(constants.Partition, partition).
+		Int(constants.MessageSize, len(message)).
+		Int(constants.WorkerID, workerID).
+		Int64(constants.Offset, offset).
+		Time(constants.Time, time).
+		Msg("(Processing Kafka message)")
+}
+
+func (l *Logger) KafkaLogCommittedMessage(topic string, partition int, offset int64) {
+	l.logger.Debug().Str(constants.Topic, topic).
+		Int(constants.Partition, partition).
+		Int64(constants.Offset, offset).
+		Msg("(Committed Kafka message)")
 }
 
 func (l *Logger) msg(level string, message interface{}, args ...interface{}) {

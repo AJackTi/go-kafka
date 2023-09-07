@@ -15,7 +15,7 @@ postgres:
 
 kafka:
   brokers: ["localhost:9092", "localhost:9093"]
-  groupID: go_clean_architecture
+  groupID: goCleanArchitecture
   initTopics: true
 
 kafkaTopics:
@@ -26,6 +26,6 @@ kafkaTopics:
 
 kafkaPublisherConfig:
   topic: event_created
-  topicPrefix: eventstore
+  topicPrefix: eventStore
   partitions: 10
   replicationFactor: 1
