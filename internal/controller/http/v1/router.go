@@ -18,7 +18,7 @@ import (
 // NewRouter -.
 // Swagger spec:
 // @title       Go Clean Template API
-// @description Using a translation service as an example
+// @description Using a service as an example
 // @version     1.0
 // @host        localhost:8080
 // @BasePath    /v1
