@@ -8,16 +8,17 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gin-gonic/gin"
-
 	"github.com/evrone/go-clean-template/config"
 	v1 "github.com/evrone/go-clean-template/internal/controller/http/v1"
+	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/evrone/go-clean-template/internal/repo"
 	"github.com/evrone/go-clean-template/internal/usecase"
+	"github.com/evrone/go-clean-template/pkg/es"
 	"github.com/evrone/go-clean-template/pkg/httpserver"
 	kafkaClient "github.com/evrone/go-clean-template/pkg/kafka"
 	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/evrone/go-clean-template/pkg/postgres"
+	"github.com/gin-gonic/gin"
 )
 
 // Run creates objects via constructors.
@@ -35,6 +36,14 @@ func Run(cfg *config.Config) {
 	kafkaProducer := kafkaClient.NewProducer(*logger, cfg.Kafka.Brokers)
 	defer kafkaProducer.Close()
 
+	eventSerializer := domain.NewEventSerializer()
+	eventBus := es.NewKafkaEventsBus(kafkaProducer, es.KafkaEventsBusConfig{
+		Topic:             cfg.Topic,
+		TopicPrefix:       cfg.TopicPrefix,
+		Partitions:        cfg.Partitions,
+		ReplicationFactor: cfg.ReplicationFactor,
+	})
+
 	// connect kafka brokers
 	kafkaConn, err := connectKafkaBrokers(context.Background(), cfg)
 	if err != nil {
@@ -49,7 +58,7 @@ func Run(cfg *config.Config) {
 
 	// Use case
 	taskUseCase := usecase.NewTask(
-		repo.NewTask(pg),
+		repo.NewTask(pg, eventBus, eventSerializer),
 	)
 
 	// HTTP Server

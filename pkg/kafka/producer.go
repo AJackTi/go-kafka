@@ -39,7 +39,6 @@ func NewRequireNoneProducer(log logger.Logger, brokers []string) *producer {
 }
 
 func (p *producer) PublishMessage(ctx context.Context, msgs ...kafka.Message) error {
-
 	if err := p.w.WriteMessages(ctx, msgs...); err != nil {
 		p.log.Error(err)
 		return err
