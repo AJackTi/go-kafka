@@ -20,12 +20,14 @@ type (
 	// App -.
 	App struct {
 		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`
+		Env     string `env-required:"true" yaml:"env"     env:"APP_ENV"`
 		Version string `env-required:"true" yaml:"version" env:"APP_VERSION"`
 	}
 
 	// HTTP -.
 	HTTP struct {
 		Port string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
+		Cors *bool  `env-required:"true" yaml:"cors" env:"HTTP_CORS"`
 	}
 
 	// Log -.
@@ -49,7 +51,7 @@ type (
 		Topic             string `env-required:"true" yaml:"topic" 				env:"TOPIC"`
 		TopicPrefix       string `env-required:"true" yaml:"topicPrefix" 		env:"TOPIC_PREFIX"`
 		Partitions        int    `env-required:"true" yaml:"partitions" 		env:"PARTITIONS"`
-		ReplicationFactor int    `env-required:"true" yaml:"replicationFactor" env:"REPLICATION_FACTOR"`
+		ReplicationFactor int    `env-required:"true" yaml:"replicationFactor"  env:"REPLICATION_FACTOR"`
 	}
 )
 

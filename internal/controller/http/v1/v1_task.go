@@ -13,13 +13,15 @@ type taskRoutes struct {
 	l logger.Interface
 }
 
-func newTaskRoutes(handler *gin.RouterGroup, t usecase.Task, l logger.Interface) {
-	r := &taskRoutes{t, l}
+func (hand *handler) NewTaskRoutes(handler *gin.RouterGroup, taskUc usecase.Task, logger logger.Interface) *handler {
+	router := &taskRoutes{taskUc, logger}
 
 	h := handler.Group("/tasks")
 	{
-		h.POST("", r.CreateTask)
+		h.POST("", router.CreateTask)
 	}
+
+	return hand
 }
 
 type RequestCreateTask struct {

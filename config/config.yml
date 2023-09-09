@@ -1,21 +1,24 @@
 app:
-  name: 'go-clean-template'
-  version: '1.0.0'
+  name: "go-kafka"
+  # values: localhost, staging, production
+  env: "localhost"
+  version: "1.0.0"
 
 http:
-  port: '8000'
+  port: "8000"
+  cors: true
 
 logger:
-  logLevel: 'debug'
-  rollbarEnv: 'go-clean-template'
+  logLevel: "debug"
+  rollbarEnv: "go-clean-template"
 
 postgres:
   poolMax: 2
-  url: 'postgres://user:pass@localhost:5432/postgres'
+  url: "postgres://user:pass@localhost:5432/postgres"
 
 kafka:
   brokers: ["localhost:9092", "localhost:9093"]
-  groupID: goCleanArchitecture
+  groupID: go-clean-template
   initTopics: true
 
 kafkaTopics:

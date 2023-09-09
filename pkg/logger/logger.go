@@ -33,22 +33,22 @@ var _ Interface = (*Logger)(nil)
 
 // New -.
 func New(level string) *Logger {
-	var l zerolog.Level
+	var log zerolog.Level
 
 	switch strings.ToLower(level) {
 	case "error":
-		l = zerolog.ErrorLevel
+		log = zerolog.ErrorLevel
 	case "warn":
-		l = zerolog.WarnLevel
+		log = zerolog.WarnLevel
 	case "info":
-		l = zerolog.InfoLevel
+		log = zerolog.InfoLevel
 	case "debug":
-		l = zerolog.DebugLevel
+		log = zerolog.DebugLevel
 	default:
-		l = zerolog.InfoLevel
+		log = zerolog.InfoLevel
 	}
 
-	zerolog.SetGlobalLevel(l)
+	zerolog.SetGlobalLevel(log)
 
 	skipFrameCount := 3
 	logger := zerolog.New(os.Stdout).With().Timestamp().CallerWithSkipFrameCount(zerolog.CallerSkipFrameCount + skipFrameCount).Logger()
@@ -59,64 +59,64 @@ func New(level string) *Logger {
 }
 
 // Debug -.
-func (l *Logger) Debug(message interface{}, args ...interface{}) {
-	l.msg("debug", message, args...)
+func (logger *Logger) Debug(message interface{}, args ...interface{}) {
+	logger.msg("debug", message, args...)
 }
 
 // Info -.
-func (l *Logger) Info(message string, args ...interface{}) {
-	l.log(message, args...)
+func (logger *Logger) Info(message string, args ...interface{}) {
+	logger.log(message, args...)
 }
 
 // Infof uses fmt.Sprintf to log a templated message.
-func (l *Logger) Infof(template string, args ...interface{}) {
-	l.log(template, args...)
+func (logger *Logger) Infof(template string, args ...interface{}) {
+	logger.log(template, args...)
 }
 
 // Warn -.
-func (l *Logger) Warn(message string, args ...interface{}) {
-	l.log(message, args...)
+func (logger *Logger) Warn(message string, args ...interface{}) {
+	logger.log(message, args...)
 }
 
 // Warnf uses fmt.Sprintf to log a templated message.
-func (l *Logger) Warnf(template string, args ...interface{}) {
-	l.log(template, args...)
+func (logger *Logger) Warnf(template string, args ...interface{}) {
+	logger.log(template, args...)
 }
 
 // Error -.
-func (l *Logger) Error(message interface{}, args ...interface{}) {
-	if l.logger.GetLevel() == zerolog.DebugLevel {
-		l.Debug(message, args...)
+func (logger *Logger) Error(message interface{}, args ...interface{}) {
+	if logger.logger.GetLevel() == zerolog.DebugLevel {
+		logger.Debug(message, args...)
 	}
 
-	l.msg("error", message, args...)
+	logger.msg("error", message, args...)
 }
 
 // Errorf -.
-func (l *Logger) Errorf(template string, args ...interface{}) {
-	if l.logger.GetLevel() == zerolog.DebugLevel {
-		l.Debug(template, args...)
+func (logger *Logger) Errorf(template string, args ...interface{}) {
+	if logger.logger.GetLevel() == zerolog.DebugLevel {
+		logger.Debug(template, args...)
 	}
 
-	l.msg("error", template, args...)
+	logger.msg("error", template, args...)
 }
 
 // Fatal -.
-func (l *Logger) Fatal(message interface{}, args ...interface{}) {
-	l.msg("fatal", message, args...)
+func (logger *Logger) Fatal(message interface{}, args ...interface{}) {
+	logger.msg("fatal", message, args...)
 
 	os.Exit(1)
 }
 
-func (l *Logger) log(message string, args ...interface{}) {
+func (logger *Logger) log(message string, args ...interface{}) {
 	if len(args) == 0 {
-		l.logger.Info().Msg(message)
+		logger.logger.Info().Msg(message)
 	} else {
-		l.logger.Info().Msgf(message, args...)
+		logger.logger.Info().Msgf(message, args...)
 	}
 }
-func (l *Logger) KafkaProcessMessage(topic string, partition int, message []byte, workerID int, offset int64, time time.Time) {
-	l.logger.Info().
+func (logger *Logger) KafkaProcessMessage(topic string, partition int, message []byte, workerID int, offset int64, time time.Time) {
+	logger.logger.Info().
 		Str(constants.Topic, topic).
 		Int(constants.Partition, partition).
 		Int(constants.MessageSize, len(message)).
@@ -126,20 +126,20 @@ func (l *Logger) KafkaProcessMessage(topic string, partition int, message []byte
 		Msg("(Processing Kafka message)")
 }
 
-func (l *Logger) KafkaLogCommittedMessage(topic string, partition int, offset int64) {
-	l.logger.Debug().Str(constants.Topic, topic).
+func (logger *Logger) KafkaLogCommittedMessage(topic string, partition int, offset int64) {
+	logger.logger.Debug().Str(constants.Topic, topic).
 		Int(constants.Partition, partition).
 		Int64(constants.Offset, offset).
 		Msg("(Committed Kafka message)")
 }
 
-func (l *Logger) msg(level string, message interface{}, args ...interface{}) {
+func (logger *Logger) msg(level string, message interface{}, args ...interface{}) {
 	switch msg := message.(type) {
 	case error:
-		l.log(msg.Error(), args...)
+		logger.log(msg.Error(), args...)
 	case string:
-		l.log(msg, args...)
+		logger.log(msg, args...)
 	default:
-		l.log(fmt.Sprintf("%s message %v has unknown type %v", level, message, msg), args...)
+		logger.log(fmt.Sprintf("%s message %v has unknown type %v", level, message, msg), args...)
 	}
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/evrone/go-clean-template/internal/repo"
 	"github.com/evrone/go-clean-template/pkg/es"
 	"github.com/evrone/go-clean-template/pkg/logger"
+	"github.com/evrone/go-clean-template/pkg/postgres"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -49,6 +50,7 @@ type subscription struct {
 	log             logger.Logger
 	cfg             *config.Config
 	eventSerializer *domain.EventSerializer
+	pg              *postgres.Postgres
 	taskRepo        *repo.TaskRepo
 }
 
@@ -56,12 +58,15 @@ func NewSubscription(
 	log logger.Logger,
 	cfg *config.Config,
 	eventSerializer *domain.EventSerializer,
-	taskRepo *repo.TaskRepo,
+	pg *postgres.Postgres,
 ) *subscription {
+	// Repo
+	taskRepo := repo.NewTask(pg)
 	return &subscription{
 		log:             log,
 		cfg:             cfg,
 		eventSerializer: eventSerializer,
+		pg:              pg,
 		taskRepo:        taskRepo,
 	}
 }

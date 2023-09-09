@@ -5,7 +5,7 @@ import (
 )
 
 type Task struct {
-	AggregateID string       `json:"aggregateID"`
+	AggregateID string    `json:"aggregateID"`
 	Title       string    `json:"title"`
 	Name        string    `json:"name"`
 	Image       string    `json:"image"`

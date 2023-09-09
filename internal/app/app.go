@@ -9,16 +9,15 @@ import (
 	"syscall"
 
 	"github.com/evrone/go-clean-template/config"
-	v1 "github.com/evrone/go-clean-template/internal/controller/http/v1"
+	http "github.com/evrone/go-clean-template/internal/controller/http"
 	"github.com/evrone/go-clean-template/internal/domain"
-	"github.com/evrone/go-clean-template/internal/repo"
 	"github.com/evrone/go-clean-template/internal/subscription"
-	"github.com/evrone/go-clean-template/internal/usecase"
 	"github.com/evrone/go-clean-template/pkg/es"
 	"github.com/evrone/go-clean-template/pkg/httpserver"
 	kafkaClient "github.com/evrone/go-clean-template/pkg/kafka"
 	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/evrone/go-clean-template/pkg/postgres"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,11 +34,13 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
-	// kafka producer
+	// Kafka producer
 	kafkaProducer := kafkaClient.NewProducer(*logger, cfg.Kafka.Brokers)
 	defer kafkaProducer.Close()
 
+	// Kafka event serializer
 	eventSerializer := domain.NewEventSerializer()
+
 	eventBus := es.NewKafkaEventsBus(kafkaProducer, es.KafkaEventsBusConfig{
 		Topic:             cfg.Topic,
 		TopicPrefix:       cfg.TopicPrefix,
@@ -47,28 +48,32 @@ func Run(cfg *config.Config) {
 		ReplicationFactor: cfg.ReplicationFactor,
 	})
 
-	// connect kafka brokers
+	// Connect kafka brokers
 	kafkaConn, err := connectKafkaBrokers(ctx, cfg)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("app - Run - connectKafkaBrokers: %w", err))
 	}
 	defer kafkaConn.Close() // nolint: errcheck
 
-	// init kafka topics
+	// Init kafka topics
 	if cfg.Kafka.InitTopics {
 		initKafkaTopics(ctx, cfg, kafkaConn)
 	}
 
-	taskRepo := repo.NewTask(pg)
-	// Use case
-	taskUseCase := usecase.NewTask(eventSerializer, eventBus)
-
 	// HTTP Server
 	handler := gin.New()
-	v1.NewRouter(handler, logger, taskUseCase)
+
+	// middleware for all
+	// cors allow all origins
+	if *cfg.HTTP.Cors {
+		logger.Info("Set CORS for testing, please don't use it in production")
+		handler.Use(cors.Default())
+	}
+	http.NewRouter(cfg, handler, logger, pg, eventSerializer, eventBus)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
-	subscription := subscription.NewSubscription(*logger, cfg, eventSerializer, taskRepo)
+	// Kafka consumer
+	subscription := subscription.NewSubscription(*logger, cfg, eventSerializer, pg)
 	consumerGroup := kafkaClient.NewConsumerGroup(cfg.Kafka.Brokers, cfg.GroupID, *logger)
 	go func() {
 		err := consumerGroup.ConsumeTopicWithErrGroup(
