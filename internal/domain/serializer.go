@@ -3,9 +3,9 @@ package domain
 import (
 	"errors"
 
-	"github.com/evrone/go-clean-template/internal/events"
-	"github.com/evrone/go-clean-template/pkg/es"
-	"github.com/evrone/go-clean-template/pkg/es/serializer"
+	"github.com/AJackTi/go-kafka/internal/events"
+	"github.com/AJackTi/go-kafka/pkg/es"
+	"github.com/AJackTi/go-kafka/pkg/es/serializer"
 )
 
 var (

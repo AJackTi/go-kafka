@@ -3,11 +3,11 @@ package usecase
 import (
 	"context"
 
-	"github.com/evrone/go-clean-template/internal/aggregate"
-	"github.com/evrone/go-clean-template/internal/domain"
-	"github.com/evrone/go-clean-template/internal/entity"
-	internalEvent "github.com/evrone/go-clean-template/internal/events"
-	"github.com/evrone/go-clean-template/pkg/es"
+	"github.com/AJackTi/go-kafka/internal/aggregate"
+	"github.com/AJackTi/go-kafka/internal/domain"
+	"github.com/AJackTi/go-kafka/internal/entity"
+	internalEvent "github.com/AJackTi/go-kafka/internal/events"
+	"github.com/AJackTi/go-kafka/pkg/es"
 	"github.com/google/uuid"
 )
 

@@ -10,19 +10,19 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	// Swagger docs.
-	"github.com/evrone/go-clean-template/config"
-	_ "github.com/evrone/go-clean-template/docs"
-	v1 "github.com/evrone/go-clean-template/internal/controller/http/v1"
-	"github.com/evrone/go-clean-template/internal/domain"
-	"github.com/evrone/go-clean-template/internal/usecase"
-	"github.com/evrone/go-clean-template/pkg/es"
-	"github.com/evrone/go-clean-template/pkg/logger"
-	"github.com/evrone/go-clean-template/pkg/postgres"
+	"github.com/AJackTi/go-kafka/config"
+	_ "github.com/AJackTi/go-kafka/docs"
+	v1 "github.com/AJackTi/go-kafka/internal/controller/http/v1"
+	"github.com/AJackTi/go-kafka/internal/domain"
+	"github.com/AJackTi/go-kafka/internal/usecase"
+	"github.com/AJackTi/go-kafka/pkg/es"
+	"github.com/AJackTi/go-kafka/pkg/logger"
+	"github.com/AJackTi/go-kafka/pkg/postgres"
 )
 
 // NewRouter -.
 // Swagger spec:
-// @title       Go Clean Template API
+// @title       Go Kafka API
 // @description Using a service as an example
 // @version     1.0
 // @host        localhost:8080

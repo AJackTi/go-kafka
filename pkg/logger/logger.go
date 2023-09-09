@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/evrone/go-clean-template/pkg/constants"
+	"github.com/AJackTi/go-kafka/pkg/constants"
 	"github.com/rs/zerolog"
 )
 

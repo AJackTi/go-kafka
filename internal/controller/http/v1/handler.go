@@ -1,6 +1,6 @@
 package v1
 
-import "github.com/evrone/go-clean-template/internal/usecase"
+import "github.com/AJackTi/go-kafka/internal/usecase"
 
 type handler struct {
 	taskUc *usecase.TaskUseCase

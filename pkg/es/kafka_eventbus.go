@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evrone/go-clean-template/pkg/es/serializer"
-	kafkaClient "github.com/evrone/go-clean-template/pkg/kafka"
+	"github.com/AJackTi/go-kafka/pkg/es/serializer"
+	kafkaClient "github.com/AJackTi/go-kafka/pkg/kafka"
 	"github.com/segmentio/kafka-go"
 )
 

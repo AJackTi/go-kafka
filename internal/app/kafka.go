@@ -6,10 +6,10 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/pkg/constants"
-	kafkaClient "github.com/evrone/go-clean-template/pkg/kafka"
-	"github.com/evrone/go-clean-template/pkg/logger"
+	"github.com/AJackTi/go-kafka/config"
+	"github.com/AJackTi/go-kafka/pkg/constants"
+	kafkaClient "github.com/AJackTi/go-kafka/pkg/kafka"
+	"github.com/AJackTi/go-kafka/pkg/logger"
 	"github.com/segmentio/kafka-go"
 )
 

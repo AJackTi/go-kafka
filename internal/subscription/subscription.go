@@ -7,14 +7,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/internal/domain"
-	"github.com/evrone/go-clean-template/internal/entity"
-	"github.com/evrone/go-clean-template/internal/events"
-	"github.com/evrone/go-clean-template/internal/repo"
-	"github.com/evrone/go-clean-template/pkg/es"
-	"github.com/evrone/go-clean-template/pkg/logger"
-	"github.com/evrone/go-clean-template/pkg/postgres"
+	"github.com/AJackTi/go-kafka/config"
+	"github.com/AJackTi/go-kafka/internal/domain"
+	"github.com/AJackTi/go-kafka/internal/entity"
+	"github.com/AJackTi/go-kafka/internal/events"
+	"github.com/AJackTi/go-kafka/internal/repo"
+	"github.com/AJackTi/go-kafka/pkg/es"
+	"github.com/AJackTi/go-kafka/pkg/logger"
+	"github.com/AJackTi/go-kafka/pkg/postgres"
 	"github.com/segmentio/kafka-go"
 )
 

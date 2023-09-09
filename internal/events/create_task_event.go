@@ -1,7 +1,7 @@
 package events
 
 import (
-	"github.com/evrone/go-clean-template/pkg/es"
+	"github.com/AJackTi/go-kafka/pkg/es"
 )
 
 const (

@@ -3,7 +3,7 @@ package kafka
 import (
 	"context"
 
-	"github.com/evrone/go-clean-template/pkg/logger"
+	"github.com/AJackTi/go-kafka/pkg/logger"
 	"github.com/segmentio/kafka-go"
 )
 

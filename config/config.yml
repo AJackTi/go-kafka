@@ -10,7 +10,7 @@ http:
 
 logger:
   logLevel: "debug"
-  rollbarEnv: "go-clean-template"
+  rollbarEnv: "go-kafka"
 
 postgres:
   poolMax: 2
@@ -18,7 +18,7 @@ postgres:
 
 kafka:
   brokers: ["localhost:9092", "localhost:9093"]
-  groupID: go-clean-template
+  groupID: go-kafka
   initTopics: true
 
 kafkaTopics:

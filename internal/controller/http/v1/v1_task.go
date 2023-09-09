@@ -3,8 +3,8 @@ package v1
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/internal/usecase"
-	"github.com/evrone/go-clean-template/pkg/logger"
+	"github.com/AJackTi/go-kafka/internal/usecase"
+	"github.com/AJackTi/go-kafka/pkg/logger"
 	"github.com/gin-gonic/gin"
 )
 

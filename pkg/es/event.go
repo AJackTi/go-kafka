@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evrone/go-clean-template/pkg/es/serializer"
+	"github.com/AJackTi/go-kafka/pkg/es/serializer"
 	uuid "github.com/satori/go.uuid"
 )
 

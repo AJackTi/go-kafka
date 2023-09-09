@@ -1,7 +1,7 @@
 package kafka
 
 import (
-	"github.com/evrone/go-clean-template/pkg/logger"
+	"github.com/AJackTi/go-kafka/pkg/logger"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/compress"
 )
