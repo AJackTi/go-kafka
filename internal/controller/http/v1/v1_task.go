@@ -9,16 +9,17 @@ import (
 )
 
 type taskRoutes struct {
-	t usecase.Task
-	l logger.Interface
+	taskUc usecase.TaskUsecase
+	logger logger.Interface
 }
 
-func (hand *handler) NewTaskRoutes(handler *gin.RouterGroup, taskUc usecase.Task, logger logger.Interface) *handler {
+func (hand *handler) NewTaskRoutes(handler *gin.RouterGroup, taskUc usecase.TaskUsecase, logger logger.Interface) *handler {
 	router := &taskRoutes{taskUc, logger}
 
-	h := handler.Group("/tasks")
+	hl := handler.Group("/tasks")
 	{
-		h.POST("", router.CreateTask)
+		hl.POST("", router.CreateTask)
+		hl.GET("", router.List)
 	}
 
 	return hand
@@ -48,7 +49,7 @@ func (r *taskRoutes) CreateTask(c *gin.Context) {
 		return
 	}
 
-	err := r.t.CreateTask(c.Request.Context(), &usecase.CreateTaskRequest{
+	err := r.taskUc.CreateTask(c.Request.Context(), &usecase.CreateTaskRequest{
 		Title:       request.Title,
 		Name:        request.Name,
 		Image:       request.Image,
@@ -56,11 +57,24 @@ func (r *taskRoutes) CreateTask(c *gin.Context) {
 		Status:      request.Status,
 	})
 	if err != nil {
-		r.l.Error(err, "http - v1 - create_task")
+		r.logger.Error(err, "http - v1 - create_task")
 		errorResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
 
+	c.JSON(http.StatusOK, request)
+}
+
+// @Summary     List task
+// @Description List all the tasks
+// @ID          task
+// @Tags  	    list_task
+// @Accept      json
+// @Produce     json
+// @Success     200
+// @Failure     500 {object} response
+// @Router      /tasks [post]
+func (r *taskRoutes) List(c *gin.Context) {
 	c.JSON(http.StatusOK, "")
 }

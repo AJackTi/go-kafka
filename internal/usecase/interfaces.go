@@ -10,8 +10,8 @@ import (
 //go:generate mockgen -source=interfaces.go -destination=./mocks_test.go -package=usecase_test
 
 type (
-	// Task
-	Task interface {
+	// TaskUsecase
+	TaskUsecase interface {
 		CreateTask(context.Context, *CreateTaskRequest) error
 		// List(context.Context) ([]*entity.Task, error)
 		// Get(context.Context, string) (*entity.Task, error)
