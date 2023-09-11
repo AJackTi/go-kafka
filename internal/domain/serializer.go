@@ -28,6 +28,8 @@ func (s *EventSerializer) SerializeEvent(aggregate es.Aggregate, event any) (es.
 	switch evt := event.(type) {
 	case *events.TaskCreatedEventV1:
 		return es.NewEvent(aggregate, events.TaskCreatedEventType, eventBytes, evt.Metadata), nil
+	case *events.TaskUpdatedEventV1:
+		return es.NewEvent(aggregate, events.TaskUpdatedEventType, eventBytes, evt.Metadata), nil
 
 	default:
 		return es.Event{}, err
@@ -39,6 +41,8 @@ func (s *EventSerializer) DeserializeEvent(event es.Event) (any, error) {
 	switch event.GetEventType() {
 	case events.TaskCreatedEventType:
 		return deserializeEvent(event, new(events.TaskCreatedEventV1))
+	case events.TaskUpdatedEventType:
+		return deserializeEvent(event, new(events.TaskUpdatedEventV1))
 
 	default:
 		return nil, ErrInvalidEvent

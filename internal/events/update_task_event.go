@@ -1,14 +1,13 @@
 package events
 
-import (
-	"github.com/AJackTi/go-kafka/pkg/es"
-)
+import "github.com/AJackTi/go-kafka/pkg/es"
 
 const (
-	TaskCreatedEventType es.EventType = "TASK_CREATED_V1"
+	TaskUpdatedEventType es.EventType = "TASK_UPDATED_V1"
 )
 
-type TaskCreatedEventV1 struct {
+type TaskUpdatedEventV1 struct {
+	ID          string `json:"id"`
 	Title       string `json:"title"`
 	Name        string `json:"name"`
 	Image       string `json:"image"`

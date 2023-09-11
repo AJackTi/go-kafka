@@ -151,6 +151,11 @@ func (s *subscription) when(ctx context.Context, esEvent es.Event) error {
 		if err == nil {
 			return s.taskRepo.CreateTask(ctx, task)
 		}
+	case *events.TaskUpdatedEventV1:
+		task, err = unmarshalToTask(string(esEvent.Data))
+		if err == nil {
+			return s.taskRepo.UpdateTask(ctx, task)
+		}
 
 	default:
 		return ErrUnknownEventType

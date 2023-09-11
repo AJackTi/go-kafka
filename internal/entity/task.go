@@ -5,14 +5,15 @@ import (
 )
 
 type Task struct {
-	AggregateID string    `json:"aggregateID"`
-	Title       string    `json:"title"`
-	Name        string    `json:"name"`
-	Image       string    `json:"image"`
-	Description string    `json:"description"`
-	Status      string    `json:"status"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          string    `json:"id,omitempty"`
+	AggregateID string    `json:"aggregateID,omitempty"`
+	Title       string    `json:"title,omitempty"`
+	Name        string    `json:"name,omitempty"`
+	Image       string    `json:"image,omitempty"`
+	Description string    `json:"description,omitempty"`
+	Status      string    `json:"status,omitempty"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
 }
 
 func NewTask(id string) *Task {

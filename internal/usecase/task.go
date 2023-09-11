@@ -32,6 +32,14 @@ type CreateTaskRequest struct {
 	Status      string
 }
 
+type UpdateTaskRequest struct {
+	Title       string
+	Name        string
+	Image       string
+	Description string
+	Status      string
+}
+
 // CreateTask - Create task.
 func (uc *TaskUseCase) CreateTask(ctx context.Context, request *CreateTaskRequest) error {
 	// Push to Kafka
@@ -51,6 +59,37 @@ func (uc *TaskUseCase) CreateTask(ctx context.Context, request *CreateTaskReques
 		Status:      request.Status,
 	}
 	event, err := uc.eventSerializer.SerializeEvent(taskAggregate, taskCreatedEvent)
+	if err != nil {
+		return err
+	}
+
+	if err := uc.eventBus.ProcessEvents(ctx, []es.Event{event}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateTask - Update task.
+func (uc *TaskUseCase) UpdateTask(ctx context.Context, id string, request *UpdateTaskRequest) error {
+	// Push to Kafka
+	taskAggregate := aggregate.NewTaskAggregate(uuid.Must(uuid.NewRandom()).String())
+	taskAggregate.Task = &entity.Task{
+		Title:       request.Title,
+		Name:        request.Name,
+		Image:       request.Image,
+		Description: request.Description,
+		Status:      request.Status,
+	}
+	taskUpdatedEvent := &internalEvent.TaskUpdatedEventV1{
+		ID:          id,
+		Title:       request.Title,
+		Name:        request.Name,
+		Image:       request.Image,
+		Description: request.Description,
+		Status:      request.Status,
+	}
+	event, err := uc.eventSerializer.SerializeEvent(taskAggregate, taskUpdatedEvent)
 	if err != nil {
 		return err
 	}

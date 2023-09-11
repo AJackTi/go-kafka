@@ -7,7 +7,7 @@ import (
 	"github.com/AJackTi/go-kafka/pkg/logger"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/compress"
-	"golang.org/x/sync/errgroup"
+	errGroup "golang.org/x/sync/errgroup"
 )
 
 // MessageProcessor processor methods must implement kafka.Worker func method interface
@@ -103,7 +103,7 @@ func (c *consumerGroup) ConsumeTopicWithErrGroup(ctx context.Context, groupTopic
 
 	c.log.Info("(Starting ConsumeTopicWithErrGroup) GroupID: %s, topics: %+v, poolSize: %d", c.GroupID, groupTopics, poolSize)
 
-	g, ctx := errgroup.WithContext(ctx)
+	g, ctx := errGroup.WithContext(ctx)
 	for i := 0; i <= poolSize; i++ {
 		g.Go(c.runWorker(ctx, worker, r, i))
 	}

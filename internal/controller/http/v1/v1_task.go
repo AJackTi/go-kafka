@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/AJackTi/go-kafka/internal/usecase"
@@ -19,6 +20,7 @@ func (hand *handler) NewTaskRoutes(handler *gin.RouterGroup, taskUc usecase.Task
 	hl := handler.Group("/tasks")
 	{
 		hl.POST("", router.CreateTask)
+		hl.PUT("/:id", router.UpdateTask)
 		hl.GET("", router.List)
 	}
 
@@ -26,6 +28,14 @@ func (hand *handler) NewTaskRoutes(handler *gin.RouterGroup, taskUc usecase.Task
 }
 
 type RequestCreateTask struct {
+	Title       string `json:"title"`
+	Name        string `json:"name"`
+	Image       string `json:"image"`
+	Description string `json:"description"`
+	Status      string `json:"status"`
+}
+
+type RequestUpdateTask struct {
 	Title       string `json:"title"`
 	Name        string `json:"name"`
 	Image       string `json:"image"`
@@ -77,4 +87,43 @@ func (r *taskRoutes) CreateTask(c *gin.Context) {
 // @Router      /tasks [post]
 func (r *taskRoutes) List(c *gin.Context) {
 	c.JSON(http.StatusOK, "")
+}
+
+// @Summary     Update task
+// @Description Update task
+// @ID          task
+// @Tags  	    update_task
+// @Accept      json
+// @Produce     json
+// @Success     200
+// @Failure     500 {object} response
+// @Router      /tasks [post]
+func (r *taskRoutes) UpdateTask(c *gin.Context) {
+	taskID := c.Param("id")
+	if taskID == "" {
+		c.AbortWithError(http.StatusBadRequest, errors.New("invalid request"))
+		return
+	}
+
+	var request RequestUpdateTask
+	if err := c.BindJSON(&request); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	err := r.taskUc.UpdateTask(c.Request.Context(), taskID, &usecase.UpdateTaskRequest{
+		Title:       request.Title,
+		Name:        request.Name,
+		Image:       request.Image,
+		Description: request.Description,
+		Status:      request.Status,
+	})
+	if err != nil {
+		r.logger.Error(err, "http - v1 - create_task")
+		errorResponse(c, http.StatusInternalServerError, err.Error())
+
+		return
+	}
+
+	c.JSON(http.StatusOK, request)
 }
