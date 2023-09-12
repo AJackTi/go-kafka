@@ -20,8 +20,9 @@ func (hand *handler) NewTaskRoutes(handler *gin.RouterGroup, taskUc usecase.Task
 	hl := handler.Group("/tasks")
 	{
 		hl.POST("", router.CreateTask)
-		hl.PUT("/:id", router.UpdateTask)
 		hl.GET("", router.List)
+		hl.PUT("/:id", router.UpdateTask)
+		hl.DELETE("/:id", router.DeleteTask)
 	}
 
 	return hand
@@ -119,11 +120,37 @@ func (r *taskRoutes) UpdateTask(c *gin.Context) {
 		Status:      request.Status,
 	})
 	if err != nil {
-		r.logger.Error(err, "http - v1 - create_task")
+		r.logger.Error(err, "http - v1 - update_task")
 		errorResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
 	}
 
 	c.JSON(http.StatusOK, request)
+}
+
+// @Summary     Delete task
+// @Description Delete task
+// @ID          task
+// @Tags  	    delete_task
+// @Accept      json
+// @Produce     json
+// @Success     200
+// @Failure     500 {object} response
+// @Router      /tasks [delete]
+func (r *taskRoutes) DeleteTask(c *gin.Context) {
+	taskID := c.Param("id")
+	if taskID == "" {
+		c.AbortWithError(http.StatusBadRequest, errors.New("invalid request"))
+		return
+	}
+	err := r.taskUc.DeleteTask(c.Request.Context(), taskID)
+	if err != nil {
+		r.logger.Error(err, "http - v1 - delete_task")
+		errorResponse(c, http.StatusInternalServerError, err.Error())
+
+		return
+	}
+
+	c.JSON(http.StatusOK, "ok")
 }

@@ -14,17 +14,17 @@ type (
 	TaskUsecase interface {
 		CreateTask(context.Context, *CreateTaskRequest) error
 		UpdateTask(context.Context, string, *UpdateTaskRequest) error
+		DeleteTask(context.Context, string) error
 		// List(context.Context) ([]*entity.Task, error)
 		// Get(context.Context, string) (*entity.Task, error)
-		// Delete(context.Context, string) error
 	}
 
 	// TaskRepo -.
 	TaskRepo interface {
 		CreateTask(context.Context, *entity.Task) error
 		UpdateTask(context.Context, string, *entity.Task) error
+		DeleteTask(context.Context, *entity.Task) error
 		// List(context.Context) ([]*entity.Task, error)
 		// Get(context.Context, string) (*entity.Task, error)
-		// Delete(context.Context, string) error
 	}
 )

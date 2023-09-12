@@ -100,3 +100,26 @@ func (uc *TaskUseCase) UpdateTask(ctx context.Context, id string, request *Updat
 
 	return nil
 }
+
+
+// DeleteTask - Delete task.
+func (uc *TaskUseCase) DeleteTask(ctx context.Context, id string) error {
+	// Push to Kafka
+	taskAggregate := aggregate.NewTaskAggregate(uuid.Must(uuid.NewRandom()).String())
+	taskAggregate.Task = &entity.Task{
+		ID: id,
+	}
+	taskDeletedEvent := &internalEvent.TaskDeletedEventV1{
+		ID:          id,
+	}
+	event, err := uc.eventSerializer.SerializeEvent(taskAggregate, taskDeletedEvent)
+	if err != nil {
+		return err
+	}
+
+	if err := uc.eventBus.ProcessEvents(ctx, []es.Event{event}); err != nil {
+		return err
+	}
+
+	return nil
+}
