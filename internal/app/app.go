@@ -11,7 +11,6 @@ import (
 	"github.com/AJackTi/go-kafka/config"
 	http "github.com/AJackTi/go-kafka/internal/controller/http"
 	"github.com/AJackTi/go-kafka/internal/domain"
-	"github.com/AJackTi/go-kafka/internal/subscription"
 	"github.com/AJackTi/go-kafka/pkg/es"
 	"github.com/AJackTi/go-kafka/pkg/httpserver"
 	kafkaClient "github.com/AJackTi/go-kafka/pkg/kafka"
@@ -73,21 +72,21 @@ func Run(cfg *config.Config) {
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Kafka consumer
-	subscription := subscription.NewSubscription(*logger, cfg, eventSerializer, pg)
-	consumerGroup := kafkaClient.NewConsumerGroup(cfg.Kafka.Brokers, cfg.GroupID, *logger)
-	go func() {
-		err := consumerGroup.ConsumeTopicWithErrGroup(
-			ctx,
-			getConsumerGroupTopics(cfg),
-			10,
-			subscription.ProcessMessagesErrGroup,
-		)
-		if err != nil {
-			logger.Errorf("(consumerGroup ConsumeTopicWithErrGroup) err: %v", err)
-			cancel()
-			return
-		}
-	}()
+	// subscription := subscription.NewSubscription(*logger, cfg, eventSerializer, pg)
+	// consumerGroup := kafkaClient.NewConsumerGroup(cfg.Kafka.Brokers, cfg.GroupID, *logger)
+	// go func() {
+	// 	err := consumerGroup.ConsumeTopicWithErrGroup(
+	// 		ctx,
+	// 		getConsumerGroupTopics(cfg),
+	// 		10,
+	// 		subscription.ProcessMessagesErrGroup,
+	// 	)
+	// 	if err != nil {
+	// 		logger.Errorf("(consumerGroup ConsumeTopicWithErrGroup) err: %v", err)
+	// 		cancel()
+	// 		return
+	// 	}
+	// }()
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)

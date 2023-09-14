@@ -11,7 +11,7 @@
     "paths": {
         "/tasks": {
             "post": {
-                "description": "Create new task",
+                "description": "Update task",
                 "consumes": [
                     "application/json"
                 ],
@@ -19,13 +19,38 @@
                     "application/json"
                 ],
                 "tags": [
-                    "create_task"
+                    "update_task"
                 ],
-                "summary": "Create task",
+                "summary": "Update task",
                 "operationId": "task",
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/v1.response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete task",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "delete_task"
+                ],
+                "summary": "Delete task",
+                "operationId": "task",
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     },
                     "500": {
                         "description": "Internal Server Error",

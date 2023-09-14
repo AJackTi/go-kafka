@@ -14,21 +14,38 @@ info:
   version: "1.0"
 paths:
   /tasks:
-    post:
+    delete:
       consumes:
       - application/json
-      description: Create new task
+      description: Delete task
       operationId: task
       produces:
       - application/json
       responses:
         "200":
-          description: ""
+          description: OK
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/v1.response'
-      summary: Create task
+      summary: Delete task
       tags:
-      - create_task
+      - delete_task
+    post:
+      consumes:
+      - application/json
+      description: Update task
+      operationId: task
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.response'
+      summary: Update task
+      tags:
+      - update_task
 swagger: "2.0"
