@@ -2,38 +2,40 @@ package repo
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/AJackTi/go-kafka/internal/entity"
-	"github.com/AJackTi/go-kafka/pkg/postgres"
 )
 
 // TaskRepo -.
 type TaskRepo struct {
-	pg *postgres.Postgres
+	db *sql.DB
 }
 
 // NewTask -.
-func NewTask(pg *postgres.Postgres) *TaskRepo {
+func NewTask(db *sql.DB) *TaskRepo {
 	return &TaskRepo{
-		pg: pg,
+		db: db,
 	}
 }
 
 // CreateTask -.
 func (r *TaskRepo) CreateTask(ctx context.Context, task *entity.Task) error {
-	sql, args, err := r.pg.Builder.
-		Insert("tasks").
-		Columns("title, name, image, description, status").
-		Values(task.Title, task.Name, task.Image, task.Description, task.Status).
-		ToSql()
+	sqlStatement := `
+	INSERT INTO tasks (title, name, image, description, status)
+	VALUES ($1, $2, $3, $4, $5)`
+	result, err := r.db.Exec(sqlStatement, task.Title, task.Name, task.Image, task.Description, task.Status)
 	if err != nil {
-		return fmt.Errorf("TaskRepo - CreateTask - r.Builder: %w", err)
+		return fmt.Errorf("TaskRepo - CreateTask - r.Exec: %w", err)
 	}
 
-	_, err = r.pg.Pool.Exec(ctx, sql, args...)
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("TaskRepo - CreateTask - r.Pool.Exec: %w", err)
+		return fmt.Errorf("TaskRepo - CreateTask - RowsAffected: %w", err)
+	}
+	if rowsAffected != 1 {
+		return fmt.Errorf("TaskRepo - CreateTask - rowsAffected wrong")
 	}
 
 	return nil
@@ -41,22 +43,22 @@ func (r *TaskRepo) CreateTask(ctx context.Context, task *entity.Task) error {
 
 // UpdateTask -.
 func (r *TaskRepo) UpdateTask(ctx context.Context, task *entity.Task) error {
-	sql, args, err := r.pg.Builder.
-		Update("tasks").
-		Where("id = ?", task.ID).
-		Set("title", task.Title).
-		Set("image", task.Image).
-		Set("name", task.Name).
-		Set("description", task.Description).
-		Set("status", task.Status).
-		ToSql()
+	sqlStatement := `
+	UPDATE tasks
+	SET title = ?, image = ?, name = ?, description = ?, status = ?)
+	WHERE id = ?`
+
+	result, err := r.db.Exec(sqlStatement, task.Title, task.Image, task.Name, task.Description, task.Status, task.ID)
 	if err != nil {
-		return fmt.Errorf("TaskRepo - UpdateTask - r.Builder: %w", err)
+		return fmt.Errorf("TaskRepo - UpdateTask - r.Exec: %w", err)
 	}
 
-	_, err = r.pg.Pool.Exec(ctx, sql, args...)
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("TaskRepo - UpdateTask - r.Pool.Exec: %w", err)
+		return fmt.Errorf("TaskRepo - UpdateTask - RowsAffected: %w", err)
+	}
+	if rowsAffected != 1 {
+		return fmt.Errorf("TaskRepo - UpdateTask - rowsAffected wrong")
 	}
 
 	return nil
@@ -64,18 +66,20 @@ func (r *TaskRepo) UpdateTask(ctx context.Context, task *entity.Task) error {
 
 // DeleteTask -.
 func (r *TaskRepo) DeleteTask(ctx context.Context, task *entity.Task) error {
-	sql, args, err := r.pg.Builder.
-		Update("tasks").
-		Where("id = ?", task.ID).
-		Set("status", "Deleted").
-		ToSql()
+	sqlStatement := `
+	DELETE FROM tasks WHERE id = ?`
+
+	result, err := r.db.Exec(sqlStatement, task.ID)
 	if err != nil {
-		return fmt.Errorf("TaskRepo - DeleteTask - r.Builder: %w", err)
+		return fmt.Errorf("TaskRepo - DeleteTask - r.Exec: %w", err)
 	}
 
-	_, err = r.pg.Pool.Exec(ctx, sql, args...)
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("TaskRepo - DeleteTask - r.Pool.Exec: %w", err)
+		return fmt.Errorf("TaskRepo - DeleteTask - RowsAffected: %w", err)
+	}
+	if rowsAffected != 1 {
+		return fmt.Errorf("TaskRepo - DeleteTask - rowsAffected wrong")
 	}
 
 	return nil

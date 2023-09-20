@@ -1,5 +1,4 @@
----
-version: "2"
+version: "3"
 services:
   kafka-ui:
     container_name: kafka-ui
@@ -136,30 +135,41 @@ services:
       CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect0
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
 
-  # kafka-init-topics:
-  #   image: confluentinc/cp-kafka:7.2.1
-  #   volumes:
-  #     - ./data/message.json:/data/message.json
-  #   depends_on:
-  #     - kafka1
-  #   command: "bash -c 'echo Waiting for Kafka to be ready... && \
-  #     cub kafka-ready -b kafka1:29092 1 30 && \
-  #     kafka-topics --create --topic second.users --partitions 3 --replication-factor 1 --if-not-exists --bootstrap-server kafka1:29092 && \
-  #     kafka-topics --create --topic second.messages --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka1:29092 && \
-  #     kafka-topics --create --topic first.messages --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka0:29092 && \
-  #     kafka-console-producer --bootstrap-server kafka1:29092 -topic second.users < /data/message.json'"
-
-  postgres:
-    container_name: postgres
-    image: postgres
+  kafka-init-topics:
+    image: confluentinc/cp-kafka:7.2.1
     volumes:
-      - pg-data:/var/lib/postgresql/data
+      - ./data/message.json:/data/message.json
+    depends_on:
+      - kafka1
+    command: "bash -c 'echo Waiting for Kafka to be ready... && \
+      cub kafka-ready -b kafka1:29092 1 30 && \
+      kafka-topics --create --topic TASK_CREATED_V1 --if-not-exists --bootstrap-server kafka1:29092'"
+
+  # postgres:
+  #   container_name: postgres
+  #   image: postgres
+  #   volumes:
+  #     - pg-data:/var/lib/postgresql/data
+  #   environment:
+  #     POSTGRES_USER: "user"
+  #     POSTGRES_PASSWORD: "pass"
+  #     POSTGRES_DB: "postgres"
+  #   ports:
+  #     - 5432:5432
+
+  mysql:
+    image: mysql
+    container_name: mysql
+    restart: always
+    volumes:
+      - ./mysql-data:/var/lib/mysql
     environment:
-      POSTGRES_USER: "user"
-      POSTGRES_PASSWORD: "pass"
-      POSTGRES_DB: "postgres"
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: local
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: password
     ports:
-      - 5432:5432
+      - "3306:3306"
 
   elastic:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
@@ -176,15 +186,24 @@ services:
     volumes:
       - ./esdata:/usr/share/elasticsearch/data
 
-  logstash:
-    image: docker.elastic.co/logstash/logstash:7.5.2
-    # command: bash -c "cd bin && logstash-plugin install logstash-input-mongodb && logstash-plugin install logstash-output-elasticsearch && logstash -f /usr/share/logstash/config/logstash.conf"
+  logstash_0:
+    image: logstash:8.9.2
+    container_name: logstash_0
     command: bash -c "cd bin && logstash-plugin install logstash-output-elasticsearch && logstash -f /usr/share/logstash/config/logstash.conf"
     volumes:
-      - ./logstash.conf:/usr/share/logstash/config/logstash.conf
+      - ./logstash_0.conf:/usr/share/logstash/config/logstash.conf
     depends_on:
       - elastic
       - kafka0
+
+  logstash_1:
+    image: logstash:8.9.2
+    container_name: logstash_1
+    command: bash -c "cd bin && logstash-plugin install logstash-output-elasticsearch && logstash -f /usr/share/logstash/config/logstash.conf"
+    volumes:
+      - ./logstash_1.conf:/usr/share/logstash/config/logstash.conf
+    depends_on:
+      - kafka1
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.5.2

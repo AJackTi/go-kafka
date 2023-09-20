@@ -17,7 +17,6 @@ import (
 	"github.com/AJackTi/go-kafka/internal/usecase"
 	"github.com/AJackTi/go-kafka/pkg/es"
 	"github.com/AJackTi/go-kafka/pkg/logger"
-	"github.com/AJackTi/go-kafka/pkg/postgres"
 )
 
 // NewRouter -.
@@ -30,7 +29,6 @@ import (
 func NewRouter(cfg *config.Config,
 	handler *gin.Engine,
 	log logger.Interface,
-	pg *postgres.Postgres,
 	eventSerializer *domain.EventSerializer,
 	eventBus *es.KafkaEventsBus) {
 	// Options

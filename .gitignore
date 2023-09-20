@@ -23,3 +23,5 @@ bin/
 vendor/
 
 ./esdata/*
+
+./mysql-data/*

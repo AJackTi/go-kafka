@@ -13,6 +13,7 @@ type (
 		HTTP                 `yaml:"http"`
 		Log                  `yaml:"logger"`
 		PG                   `yaml:"postgres"`
+		MYSQL                `yaml:"mysql"`
 		Kafka                `yaml:"kafka"`
 		KafkaPublisherConfig `yaml:"kafkaPublisherConfig"`
 	}
@@ -39,6 +40,11 @@ type (
 	PG struct {
 		PoolMax int    `env-required:"true" yaml:"poolMax" env:"PG_POOL_MAX"`
 		URL     string `env-required:"true"                 env:"PG_URL"`
+	}
+
+	// MYSQL -.
+	MYSQL struct {
+		URL string `env-required:"true"        yaml:"url"         env:"MYSQL_URL"`
 	}
 
 	Kafka struct {

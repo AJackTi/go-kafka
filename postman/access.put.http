@@ -1,0 +1,14 @@
+@url_dev=http://localhost:8000/api/v1
+
+### signup
+PUT {{url_dev}}/tasks
+Content-Type: application/json
+
+{
+    "id": 1,
+    "title": "title 1",
+    "name": "name 2",
+    "image": "image 3",
+    "description": "description 4",
+    "status": "Doing"
+}

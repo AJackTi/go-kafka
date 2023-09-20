@@ -2,6 +2,7 @@ package subscription
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,7 +15,6 @@ import (
 	"github.com/AJackTi/go-kafka/internal/repo"
 	"github.com/AJackTi/go-kafka/pkg/es"
 	"github.com/AJackTi/go-kafka/pkg/logger"
-	"github.com/AJackTi/go-kafka/pkg/postgres"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -50,7 +50,7 @@ type subscription struct {
 	log             logger.Logger
 	cfg             *config.Config
 	eventSerializer *domain.EventSerializer
-	pg              *postgres.Postgres
+	db              *sql.DB
 	taskRepo        *repo.TaskRepo
 }
 
@@ -58,15 +58,15 @@ func NewSubscription(
 	log logger.Logger,
 	cfg *config.Config,
 	eventSerializer *domain.EventSerializer,
-	pg *postgres.Postgres,
+	db *sql.DB,
 ) *subscription {
 	// Repo
-	taskRepo := repo.NewTask(pg)
+	taskRepo := repo.NewTask(db)
 	return &subscription{
 		log:             log,
 		cfg:             cfg,
 		eventSerializer: eventSerializer,
-		pg:              pg,
+		db:              db,
 		taskRepo:        taskRepo,
 	}
 }

@@ -16,8 +16,11 @@ postgres:
   poolMax: 2
   url: "postgres://user:pass@localhost:5432/postgres"
 
+mysql:
+  url: "mysql:password@tcp(localhost:3306)/local"
+
 kafka:
-  brokers: ["localhost:9092"]
+  brokers: ["localhost:9093"]
   groupID: go-kafka
   initTopics: true
 
