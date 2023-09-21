@@ -20,7 +20,7 @@ mysql:
   url: "mysql:password@tcp(localhost:3306)/local"
 
 kafka:
-  brokers: ["localhost:9093"]
+  brokers: ["localhost:9092"]
   groupID: go-kafka
   initTopics: true
 

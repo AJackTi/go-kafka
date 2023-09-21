@@ -142,8 +142,10 @@ services:
     depends_on:
       - kafka1
     command: "bash -c 'echo Waiting for Kafka to be ready... && \
+      cub kafka-ready -b kafka0:29092 1 30 && \
       cub kafka-ready -b kafka1:29092 1 30 && \
-      kafka-topics --create --topic TASK_CREATED_V1 --if-not-exists --bootstrap-server kafka1:29092'"
+      kafka-topics --create --topic eventStore_Task --partitions 10 --replication-factor 1 --if-not-exists --bootstrap-server kafka0:29092 && \
+      kafka-topics --create --topic TASK_CREATED_V1 --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka1:29092'"
 
   # postgres:
   #   container_name: postgres
@@ -199,11 +201,13 @@ services:
   logstash_1:
     image: logstash:8.9.2
     container_name: logstash_1
-    command: bash -c "cd bin && logstash-plugin install logstash-output-elasticsearch && logstash -f /usr/share/logstash/config/logstash.conf"
+    command: bash -c "cd bin && logstash-plugin install logstash-output-jdbc && logstash -f /usr/share/logstash/config/logstash.conf"
     volumes:
       - ./logstash_1.conf:/usr/share/logstash/config/logstash.conf
+      - ./mysql-connector-java-8.0.21.jar:/opt/jar/mysql-connector-java-8.0.21.jar
     depends_on:
       - kafka1
+      - mysql
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.5.2
@@ -232,5 +236,5 @@ services:
   #   image: integration
   #   depends_on:
   #     - app
-volumes:
-  pg-data:
+# volumes:
+#   pg-data:

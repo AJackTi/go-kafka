@@ -18,6 +18,8 @@
 CREATE TABLE
     IF NOT EXISTS tasks (
         id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        aggregate_type VARCHAR(10),
+        aggregate_id VARCHAR(36),
         event_type VARCHAR(50),
         data VARCHAR(500),
         created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
