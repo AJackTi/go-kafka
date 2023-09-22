@@ -204,7 +204,6 @@ services:
     command: bash -c "cd bin && logstash-plugin install logstash-output-jdbc && logstash -f /usr/share/logstash/config/logstash.conf"
     volumes:
       - ./logstash_1.conf:/usr/share/logstash/config/logstash.conf
-      - ./mysql-connector-java-8.0.21.jar:/opt/jar/mysql-connector-java-8.0.21.jar
     depends_on:
       - kafka1
       - mysql
