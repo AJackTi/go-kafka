@@ -15,7 +15,6 @@ import (
 	"github.com/AJackTi/go-kafka/pkg/httpserver"
 	kafkaClient "github.com/AJackTi/go-kafka/pkg/kafka"
 	"github.com/AJackTi/go-kafka/pkg/logger"
-	"github.com/AJackTi/go-kafka/pkg/mysql"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -27,11 +26,11 @@ func Run(cfg *config.Config) {
 	logger := logger.New(cfg.Log.Level)
 
 	// Repository
-	db, err := mysql.New(cfg.MYSQL.URL)
-	if err != nil {
-		logger.Fatal(fmt.Errorf("app - Run - mysql.New: %w", err))
-	}
-	defer db.Close()
+	// db, err := mysql.New(cfg.MYSQL.URL)
+	// if err != nil {
+	// 	logger.Fatal(fmt.Errorf("app - Run - mysql.New: %w", err))
+	// }
+	// defer db.Close()
 
 	// Kafka producer
 	kafkaProducer := kafkaClient.NewProducer(*logger, cfg.Kafka.Brokers)

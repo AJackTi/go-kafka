@@ -23,6 +23,8 @@ services:
       KAFKA_CLUSTERS_1_METRICS_PORT: 9998
       KAFKA_CLUSTERS_1_SCHEMAREGISTRY: http://schemaregistry1:8085
       DYNAMIC_CONFIG_ENABLED: "true"
+    networks:
+      - go-kafka
 
   kafka0:
     image: confluentinc/cp-kafka:7.2.1
@@ -51,6 +53,8 @@ services:
     volumes:
       - ./scripts/update_run.sh:/tmp/update_run.sh
     command: 'bash -c ''if [ ! -f /tmp/update_run.sh ]; then echo "ERROR: Did you forget the update_run.sh file that came with this docker-compose.yml file?" && exit 1 ; else /tmp/update_run.sh && /etc/confluent/docker/run ; fi'''
+    networks:
+      - go-kafka
 
   kafka1:
     image: confluentinc/cp-kafka:7.2.1
@@ -79,6 +83,8 @@ services:
     volumes:
       - ./scripts/update_run.sh:/tmp/update_run.sh
     command: 'bash -c ''if [ ! -f /tmp/update_run.sh ]; then echo "ERROR: Did you forget the update_run.sh file that came with this docker-compose.yml file?" && exit 1 ; else /tmp/update_run.sh && /etc/confluent/docker/run ; fi'''
+    networks:
+      - go-kafka
 
   schemaregistry0:
     image: confluentinc/cp-schema-registry:7.2.1
@@ -94,6 +100,8 @@ services:
       SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: "http"
       SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
+    networks:
+      - go-kafka
 
   schemaregistry1:
     image: confluentinc/cp-schema-registry:7.2.1
@@ -109,6 +117,8 @@ services:
       SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: "http"
       SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
+    networks:
+      - go-kafka
 
   kafka-connect0:
     image: confluentinc/cp-kafka-connect:7.2.1
@@ -134,6 +144,8 @@ services:
       CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect0
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+    networks:
+      - go-kafka
 
   kafka-init-topics:
     image: confluentinc/cp-kafka:7.2.1
@@ -146,6 +158,8 @@ services:
       cub kafka-ready -b kafka1:29092 1 30 && \
       kafka-topics --create --topic eventStore_Task --partitions 10 --replication-factor 1 --if-not-exists --bootstrap-server kafka0:29092 && \
       kafka-topics --create --topic TASK_CREATED_V1 --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka1:29092'"
+    networks:
+      - go-kafka
 
   # postgres:
   #   container_name: postgres
@@ -159,19 +173,19 @@ services:
   #   ports:
   #     - 5432:5432
 
-  mysql:
-    image: mysql
-    container_name: mysql
-    restart: always
-    volumes:
-      - ./mysql-data:/var/lib/mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: local
-      MYSQL_USER: mysql
-      MYSQL_PASSWORD: password
-    ports:
-      - "3306:3306"
+  # mysql:
+  #   image: mysql
+  #   container_name: mysql
+  #   restart: always
+  #   volumes:
+  #     - ./mysql-data:/var/lib/mysql
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: password
+  #     MYSQL_DATABASE: local
+  #     MYSQL_USER: mysql
+  #     MYSQL_PASSWORD: password
+  #   ports:
+  #     - "3306:3306"
 
   elastic:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
@@ -187,6 +201,8 @@ services:
       discovery.type: single-node
     volumes:
       - ./esdata:/usr/share/elasticsearch/data
+    networks:
+      - go-kafka
 
   logstash_0:
     image: logstash:8.9.2
@@ -197,16 +213,34 @@ services:
     depends_on:
       - elastic
       - kafka0
+    networks:
+      - go-kafka
 
   logstash_1:
     image: logstash:8.9.2
     container_name: logstash_1
-    command: bash -c "cd bin && logstash-plugin install logstash-output-jdbc && logstash -f /usr/share/logstash/config/logstash.conf"
+    command: bash -c "cd bin && logstash-plugin install logstash-output-mongodb && logstash -f /usr/share/logstash/config/logstash.conf"
     volumes:
       - ./logstash_1.conf:/usr/share/logstash/config/logstash.conf
     depends_on:
       - kafka1
-      - mysql
+      - mongodb
+    networks:
+      - go-kafka
+
+  mongodb:
+    image: mongo
+    container_name: mongo
+    environment:
+      - MONGO_INITDB_DATABASE=users
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongodb-data:/data/db
+    networks:
+      - go-kafka
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.5.2
@@ -215,6 +249,8 @@ services:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
       - 5601:5601
+    networks:
+      - go-kafka
 
   # app:
   #   build: .
@@ -237,3 +273,6 @@ services:
   #     - app
 # volumes:
 #   pg-data:
+
+networks:
+  go-kafka:

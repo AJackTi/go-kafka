@@ -17,7 +17,9 @@ compose-up-integration-test: ### Run docker-compose with integration test
 .PHONY: compose-up-integration-test
 
 compose-down: ### Down docker-compose
-	rm -rf mysql-data && rm -rf esdata && \
+	# rm -rf mysql-data && \ 
+	rm -rf esdata && \
+	rm -rf mongodb-data && \
 	docker-compose down
 .PHONY: compose-down
 
