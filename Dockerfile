@@ -13,9 +13,13 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -tags migrate -o /bin/app ./cmd/app
 
 # Step 3: Final
+FROM alpine:3.19 as certs
+RUN apk --no-cache add ca-certificates
+
+# Step 4: Final minimal image
 FROM scratch
+COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /app/config /config
 COPY --from=builder /app/migrations /migrations
 COPY --from=builder /bin/app /app
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-CMD ["/app"]
+ENTRYPOINT ["/app"]
