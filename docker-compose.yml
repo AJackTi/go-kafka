@@ -1,4 +1,4 @@
-version: "3"
+version: "3.9"
 services:
   kafka-ui:
     container_name: kafka-ui
@@ -25,9 +25,10 @@ services:
       DYNAMIC_CONFIG_ENABLED: "true"
     networks:
       - go-kafka
+    restart: unless-stopped
 
   kafka0:
-    image: confluentinc/cp-kafka:7.2.1
+    image: confluentinc/cp-kafka:7.5.1
     hostname: kafka0
     container_name: kafka0
     ports:
@@ -55,9 +56,10 @@ services:
     command: 'bash -c ''if [ ! -f /tmp/update_run.sh ]; then echo "ERROR: Did you forget the update_run.sh file that came with this docker-compose.yml file?" && exit 1 ; else /tmp/update_run.sh && /etc/confluent/docker/run ; fi'''
     networks:
       - go-kafka
+    restart: unless-stopped
 
   kafka1:
-    image: confluentinc/cp-kafka:7.2.1
+    image: confluentinc/cp-kafka:7.5.1
     hostname: kafka1
     container_name: kafka1
     ports:
@@ -85,9 +87,10 @@ services:
     command: 'bash -c ''if [ ! -f /tmp/update_run.sh ]; then echo "ERROR: Did you forget the update_run.sh file that came with this docker-compose.yml file?" && exit 1 ; else /tmp/update_run.sh && /etc/confluent/docker/run ; fi'''
     networks:
       - go-kafka
+    restart: unless-stopped
 
   schemaregistry0:
-    image: confluentinc/cp-schema-registry:7.2.1
+    image: confluentinc/cp-schema-registry:7.5.1
     ports:
       - 8085:8085
     depends_on:
@@ -102,9 +105,10 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
     networks:
       - go-kafka
+    restart: unless-stopped
 
   schemaregistry1:
-    image: confluentinc/cp-schema-registry:7.2.1
+    image: confluentinc/cp-schema-registry:7.5.1
     ports:
       - 18085:8085
     depends_on:
@@ -119,9 +123,10 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
     networks:
       - go-kafka
+    restart: unless-stopped
 
   kafka-connect0:
-    image: confluentinc/cp-kafka-connect:7.2.1
+    image: confluentinc/cp-kafka-connect:7.5.1
     ports:
       - 8083:8083
     depends_on:
@@ -146,9 +151,10 @@ services:
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
     networks:
       - go-kafka
+    restart: unless-stopped
 
   kafka-init-topics:
-    image: confluentinc/cp-kafka:7.2.1
+    image: confluentinc/cp-kafka:7.5.1
     volumes:
       - ./data/message.json:/data/message.json
     depends_on:
@@ -163,7 +169,7 @@ services:
 
   # postgres:
   #   container_name: postgres
-  #   image: postgres
+  #   image: postgres:16.1
   #   volumes:
   #     - pg-data:/var/lib/postgresql/data
   #   environment:
@@ -172,9 +178,10 @@ services:
   #     POSTGRES_DB: "postgres"
   #   ports:
   #     - 5432:5432
+  #   restart: unless-stopped
 
   # mysql:
-  #   image: mysql
+  #   image: mysql:8.3
   #   container_name: mysql
   #   restart: always
   #   volumes:
@@ -188,7 +195,7 @@ services:
   #     - "3306:3306"
 
   elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
     container_name: elasticsearch
     restart: always
     expose:
@@ -199,13 +206,14 @@ services:
       - 9300:9300
     environment:
       discovery.type: single-node
+      xpack.security.enabled: false
     volumes:
       - ./esdata:/usr/share/elasticsearch/data
     networks:
       - go-kafka
 
   logstash_0:
-    image: logstash:8.9.2
+    image: docker.elastic.co/logstash/logstash:8.12.0
     container_name: logstash_0
     command: bash -c "cd bin && logstash-plugin install logstash-output-elasticsearch && logstash -f /usr/share/logstash/config/logstash.conf"
     volumes:
@@ -215,9 +223,10 @@ services:
       - kafka0
     networks:
       - go-kafka
+    restart: unless-stopped
 
   logstash_1:
-    image: logstash:8.9.2
+    image: docker.elastic.co/logstash/logstash:8.12.0
     container_name: logstash_1
     command: bash -c "cd bin && logstash-plugin install logstash-output-mongodb && logstash -f /usr/share/logstash/config/logstash.conf"
     volumes:
@@ -227,9 +236,10 @@ services:
       - mongodb
     networks:
       - go-kafka
+    restart: unless-stopped
 
   mongodb:
-    image: mongo
+    image: mongo:7.0
     container_name: mongo
     environment:
       - MONGO_INITDB_DATABASE=users
@@ -241,9 +251,10 @@ services:
       - ./mongodb-data:/data/db
     networks:
       - go-kafka
+    restart: unless-stopped
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.5.2
+    image: docker.elastic.co/kibana/kibana:8.12.0
     environment:
       SERVER_NAME: kibana.example.org
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
@@ -251,6 +262,9 @@ services:
       - 5601:5601
     networks:
       - go-kafka
+    depends_on:
+      - elastic
+    restart: unless-stopped
 
   # app:
   #   build: .
@@ -262,6 +276,7 @@ services:
   #     - 8080:8080
   #   depends_on:
   #     - postgres
+  #   restart: unless-stopped
 
   # integration:
   #   build:
@@ -271,8 +286,10 @@ services:
   #   image: integration
   #   depends_on:
   #     - app
+
 # volumes:
 #   pg-data:
 
 networks:
   go-kafka:
+    driver: bridge
