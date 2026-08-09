@@ -20,6 +20,10 @@ concurrency:
 
 env:
   GOTOOLCHAIN: local
+  # Keep CI on the patched toolchain. `go-version-file` would select the
+  # module's minimum Go version (1.25.0), whose standard library is no longer
+  # current enough for the security gate.
+  GO_VERSION: 1.26.5
   GOLANGCI_LINT_VERSION: v2.12.2
 
 jobs:
@@ -41,7 +45,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
         with:
-          go-version-file: go.mod
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: go.sum
           check-latest: false
 
@@ -74,7 +78,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
         with:
-          go-version-file: go.mod
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: go.sum
           check-latest: false
 
@@ -114,7 +118,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
         with:
-          go-version-file: go.mod
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: go.sum
           check-latest: false
 
