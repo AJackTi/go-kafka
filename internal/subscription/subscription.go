@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/segmentio/kafka-go"
+
 	"github.com/AJackTi/go-kafka/config"
 	"github.com/AJackTi/go-kafka/internal/domain"
 	"github.com/AJackTi/go-kafka/internal/entity"
@@ -15,16 +17,13 @@ import (
 	"github.com/AJackTi/go-kafka/internal/repo"
 	"github.com/AJackTi/go-kafka/pkg/es"
 	"github.com/AJackTi/go-kafka/pkg/logger"
-	"github.com/segmentio/kafka-go"
 )
 
 const (
 	TaskAggregateType string = "Task"
 )
 
-var (
-	ErrUnknownEventType = errors.New("unknown event type")
-)
+var ErrUnknownEventType = errors.New("unknown event type")
 
 // AggregateType type of the Aggregate
 type AggregateType string
@@ -71,7 +70,7 @@ func NewSubscription(
 	}
 }
 
-func GetTopicName(eventStorePrefix string, aggregateType string) string {
+func GetTopicName(eventStorePrefix, aggregateType string) string {
 	return fmt.Sprintf("%s_%s", eventStorePrefix, aggregateType)
 }
 
@@ -91,8 +90,7 @@ func (s *subscription) ProcessMessagesErrGroup(ctx context.Context, r *kafka.Rea
 
 		s.logProcessMessage(m, workerID)
 
-		switch m.Topic {
-		case GetTopicName(s.cfg.KafkaPublisherConfig.TopicPrefix, TaskAggregateType):
+		if m.Topic == GetTopicName(s.cfg.Events.TopicPrefix, TaskAggregateType) {
 			s.handleTaskEvents(ctx, r, m)
 		}
 	}

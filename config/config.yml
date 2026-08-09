@@ -2,7 +2,7 @@ app:
   name: "go-kafka"
   # values: localhost, staging, production
   env: "localhost"
-  version: "1.0.0"
+  version: "0.1.0"
 
 http:
   port: "8000"
@@ -12,12 +12,8 @@ logger:
   logLevel: "debug"
   rollbarEnv: "go-kafka"
 
-postgres:
-  poolMax: 2
-  url: "postgres://user:pass@localhost:5432/postgres"
-
 mysql:
-  url: "mysql:password@tcp(localhost:3306)/local"
+  url: "mysql:password@tcp(localhost:3306)/go_kafka?parseTime=true"
 
 kafka:
   brokers: ["localhost:9092"]
@@ -33,5 +29,5 @@ kafkaTopics:
 kafkaPublisherConfig:
   topic: event_created
   topicPrefix: eventStore
-  partitions: 10
+  partitions: 3
   replicationFactor: 1

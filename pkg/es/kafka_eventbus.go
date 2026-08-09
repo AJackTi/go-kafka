@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/segmentio/kafka-go"
+
 	"github.com/AJackTi/go-kafka/pkg/es/serializer"
 	kafkaClient "github.com/AJackTi/go-kafka/pkg/kafka"
-	"github.com/segmentio/kafka-go"
 )
 
 // KafkaEventsBusConfig kafka eventbus config.
@@ -46,7 +47,7 @@ func (e *KafkaEventsBus) ProcessEvents(ctx context.Context, events []Event) erro
 	})
 }
 
-func GetTopicName(eventStorePrefix string, aggregateType string) string {
+func GetTopicName(eventStorePrefix, aggregateType string) string {
 	return fmt.Sprintf("%s_%s", eventStorePrefix, aggregateType)
 }
 

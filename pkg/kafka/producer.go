@@ -3,8 +3,9 @@ package kafka
 import (
 	"context"
 
-	"github.com/AJackTi/go-kafka/pkg/logger"
 	"github.com/segmentio/kafka-go"
+
+	"github.com/AJackTi/go-kafka/pkg/logger"
 )
 
 type Producer interface {

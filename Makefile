@@ -1,5 +1,8 @@
-include .env.example
+ENV_FILE ?= .env
+ifneq ($(wildcard $(ENV_FILE)),)
+include $(ENV_FILE)
 export
+endif
 
 LOCAL_BIN:=$(CURDIR)/bin
 PATH:=$(LOCAL_BIN):$(PATH)
@@ -9,73 +12,59 @@ help: ## Display this help screen
 .PHONY: help
 
 compose-up: ### Run docker-compose
-	docker-compose up --build -d
+	docker compose up --build -d
 .PHONY: compose-up
 
-compose-up-integration-test: ### Run docker-compose with integration test
-	docker-compose up --build --abort-on-container-exit --exit-code-from integration
-.PHONY: compose-up-integration-test
-
 compose-down: ### Down docker-compose
-	# rm -rf mysql-data && \ 
-	rm -rf esdata && \
-	rm -rf mongodb-data && \
-	docker-compose down
+	docker compose down
 .PHONY: compose-down
 
 swag-v1: ### swag init
 	swag init -g internal/controller/http/router.go
 .PHONY: swag-v1
 
-run: swag-v1 ### swag run
-	go mod tidy && go mod download && \
-	DISABLE_SWAGGER_HTTP_HANDLER='' GIN_MODE=debug CGO_ENABLED=0 go run -tags migrate ./cmd/app
+run: swag-v1 ### Run the application without implicit database migrations
+	DISABLE_SWAGGER_HTTP_HANDLER='' GIN_MODE=debug CGO_ENABLED=0 go run ./cmd/app
 .PHONY: run
 
-docker-rm-volume: ### remove docker volume
-	docker volume rm go-kafka_pg-data
-.PHONY: docker-rm-volume
+run-with-migrations: swag-v1 ### Apply migrations, then run the application
+	CGO_ENABLED=0 go run ./cmd/migrate && \
+	DISABLE_SWAGGER_HTTP_HANDLER='' GIN_MODE=debug CGO_ENABLED=0 go run ./cmd/app
+.PHONY: run-with-migrations
 
 linter-golangci: ### check by golangci linter
 	golangci-lint run
 .PHONY: linter-golangci
 
 linter-hadolint: ### check by hadolint linter
-	git ls-files --exclude='Dockerfile*' --ignored | xargs hadolint
+	hadolint Dockerfile Dockerfile.migrate integration-test/Dockerfile
 .PHONY: linter-hadolint
 
-linter-dotenv: ### check by dotenv linter
-	dotenv-linter
+linter-dotenv: ### validate the dotenv example
+	python3 scripts/validate_env.py .env.example
 .PHONY: linter-dotenv
 
 test: ### run test
-	go test -v -cover -race ./internal/...
+	go test -v -cover -race ./...
 .PHONY: test
-
-integration-test: ### run integration-test
-	go clean -testcache && go test -v ./integration-test/...
-.PHONY: integration-test
-
-mock: ### run mockgen
-	mockgen -source ./internal/usecase/interfaces.go -package usecase_test > ./internal/usecase/mocks_test.go
-.PHONY: mock
 
 migrate-create:  ### create new migration
 	migrate create -ext sql -dir migrations 'migrate_name'
 .PHONY: migrate-create
 
 migrate-up: ### migration up
-	migrate -path migrations -database '$(MYSQL_URL)' up
+	@test -n "$(MYSQL_URL)" || (echo "MYSQL_URL is required; copy .env.example to .env or export it"; exit 1)
+	migrate -path migrations -database '$(if $(filter mysql://%,$(MYSQL_URL)),$(MYSQL_URL),mysql://$(MYSQL_URL))' up
 .PHONY: migrate-up
 
 bin-deps:
-	GOBIN=$(LOCAL_BIN) go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-	GOBIN=$(LOCAL_BIN) go install github.com/golang/mock/mockgen@latest
+	GOBIN=$(LOCAL_BIN) go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1
+	GOBIN=$(LOCAL_BIN) go install github.com/swaggo/swag/cmd/swag@v1.16.6
 
 restart-logstash-1: ### Run restart-logstash-1
-	docker-compose up -d logstash_0
+	docker compose up -d logstash_0
 .PHONY: restart-logstash-1
 
 restart-logstash-2: ### Run restart-logstash-2
-	docker-compose up -d logstash_1
+	docker compose up -d logstash_1
 .PHONY: restart-logstash-2

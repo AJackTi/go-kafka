@@ -1,0 +1,16 @@
+.git
+.github
+.env
+.idea
+.vscode
+
+*.out
+*.test
+app
+bin
+
+esdata
+mongodb-data
+mysql-data
+
+postman

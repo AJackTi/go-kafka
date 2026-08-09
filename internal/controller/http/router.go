@@ -30,7 +30,8 @@ func NewRouter(cfg *config.Config,
 	handler *gin.Engine,
 	log logger.Interface,
 	eventSerializer *domain.EventSerializer,
-	eventBus *es.KafkaEventsBus) {
+	eventBus *es.KafkaEventsBus,
+) {
 	// Options
 	handler.Use(gin.Logger())
 	handler.Use(gin.Recovery())

@@ -68,15 +68,15 @@ type AggregateBase struct {
 // main aggregate must realize When interface and pass as argument to constructor
 // Example of recommended aggregate constructor method:
 //
-// func NewOrderAggregate() *OrderAggregate {
-//	orderAggregate := &OrderAggregate{
-//		Order: models.NewOrder(),
+//	func NewOrderAggregate() *OrderAggregate {
+//		orderAggregate := &OrderAggregate{
+//			Order: models.NewOrder(),
+//		}
+//		base := es.NewAggregateBase(orderAggregate.When)
+//		base.SetType(OrderAggregateType)
+//		orderAggregate.AggregateBase = base
+//		return orderAggregate
 //	}
-//	base := es.NewAggregateBase(orderAggregate.When)
-//	base.SetType(OrderAggregateType)
-//	orderAggregate.AggregateBase = base
-//	return orderAggregate
-//}
 func NewAggregateBase(when when) *AggregateBase {
 	if when == nil {
 		return nil
@@ -127,7 +127,6 @@ func (a *AggregateBase) GetChanges() []any {
 
 // Load add existing events from event store to aggregate using When interface method
 func (a *AggregateBase) Load(events []any) error {
-
 	for _, evt := range events {
 		if err := a.when(evt); err != nil {
 			return err
@@ -141,7 +140,6 @@ func (a *AggregateBase) Load(events []any) error {
 
 // Apply push event to aggregate uncommitted events using When method
 func (a *AggregateBase) Apply(event any) error {
-
 	if err := a.when(event); err != nil {
 		return err
 	}
@@ -153,7 +151,6 @@ func (a *AggregateBase) Apply(event any) error {
 
 // RaiseEvent push event to aggregate applied events using When method, used for load directly from eventstore
 func (a *AggregateBase) RaiseEvent(event any) error {
-
 	if err := a.when(event); err != nil {
 		return err
 	}

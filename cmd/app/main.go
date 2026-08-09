@@ -15,5 +15,7 @@ func main() {
 	}
 
 	// Run
-	app.Run(cfg)
+	if err := app.Run(cfg); err != nil {
+		log.Fatalf("app error: %v", err)
+	}
 }

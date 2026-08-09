@@ -7,6 +7,6 @@ const (
 )
 
 type TaskDeletedEventV1 struct {
-	ID          string `json:"id"`
-	Metadata    []byte `json:"-"`
+	ID       string `json:"id"`
+	Metadata []byte `json:"-"`
 }

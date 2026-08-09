@@ -25,7 +25,7 @@ func (r *TaskRepo) CreateTask(ctx context.Context, task *entity.Task) error {
 	sqlStatement := `
 	INSERT INTO tasks (title, name, image, description, status)
 	VALUES ($1, $2, $3, $4, $5)`
-	result, err := r.db.Exec(sqlStatement, task.Title, task.Name, task.Image, task.Description, task.Status)
+	result, err := r.db.ExecContext(ctx, sqlStatement, task.Title, task.Name, task.Image, task.Description, task.Status)
 	if err != nil {
 		return fmt.Errorf("TaskRepo - CreateTask - r.Exec: %w", err)
 	}
@@ -48,7 +48,7 @@ func (r *TaskRepo) UpdateTask(ctx context.Context, task *entity.Task) error {
 	SET title = ?, image = ?, name = ?, description = ?, status = ?)
 	WHERE id = ?`
 
-	result, err := r.db.Exec(sqlStatement, task.Title, task.Image, task.Name, task.Description, task.Status, task.ID)
+	result, err := r.db.ExecContext(ctx, sqlStatement, task.Title, task.Image, task.Name, task.Description, task.Status, task.ID)
 	if err != nil {
 		return fmt.Errorf("TaskRepo - UpdateTask - r.Exec: %w", err)
 	}
@@ -69,7 +69,7 @@ func (r *TaskRepo) DeleteTask(ctx context.Context, task *entity.Task) error {
 	sqlStatement := `
 	DELETE FROM tasks WHERE id = ?`
 
-	result, err := r.db.Exec(sqlStatement, task.ID)
+	result, err := r.db.ExecContext(ctx, sqlStatement, task.ID)
 	if err != nil {
 		return fmt.Errorf("TaskRepo - DeleteTask - r.Exec: %w", err)
 	}

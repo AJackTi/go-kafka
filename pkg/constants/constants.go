@@ -8,18 +8,13 @@ const (
 	JaegerHostPort    = "JAEGER_HOST"
 	RedisAddr         = "REDIS_ADDR"
 	MongoDbURI        = "MONGO_URI"
-	PostgresqlHost    = "POSTGRES_HOST"
-	PostgresqlPort    = "POSTGRES_PORT"
 	ElasticUrl        = "ELASTIC_URL"
 	TCP               = "tcp"
-	MIGRATIONS_DB_URL = "MIGRATIONS_DB_URL"
-
 	ReaderServicePort = "READER_SERVICE"
 
 	Yaml          = "yaml"
 	Redis         = "redis"
 	Kafka         = "kafka"
-	Postgres      = "postgres"
 	MongoDB       = "mongo"
 	ElasticSearch = "elasticSearch"
 

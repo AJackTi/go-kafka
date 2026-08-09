@@ -2,144 +2,140 @@ package logger
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/AJackTi/go-kafka/pkg/constants"
 	"github.com/rs/zerolog"
+
+	"github.com/AJackTi/go-kafka/pkg/constants"
 )
 
-// Interface -.
 type Interface interface {
-	Debug(message interface{}, args ...interface{})
-	Info(message string, args ...interface{})
+	Debug(message interface{})
+	Info(message string)
 	Infof(template string, args ...interface{})
-	Warn(message string, args ...interface{})
+	Warn(message string)
 	Warnf(template string, args ...interface{})
-	Error(message interface{}, args ...interface{})
-	Fatal(message interface{}, args ...interface{})
+	Error(message interface{})
+	Fatal(message interface{})
 	Errorf(template string, args ...interface{})
 	KafkaProcessMessage(topic string, partition int, message []byte, workerID int, offset int64, time time.Time)
 	KafkaLogCommittedMessage(topic string, partition int, offset int64)
 }
 
-// Logger -.
 type Logger struct {
 	logger *zerolog.Logger
 }
 
 var _ Interface = (*Logger)(nil)
 
-// New -.
 func New(level string) *Logger {
-	var log zerolog.Level
+	return NewWithWriter(level, os.Stdout)
+}
 
-	switch strings.ToLower(level) {
-	case "error":
-		log = zerolog.ErrorLevel
-	case "warn":
-		log = zerolog.WarnLevel
-	case "info":
-		log = zerolog.InfoLevel
+func NewWithWriter(level string, output io.Writer) *Logger {
+	logLevel := parseLevel(level)
+	configured := zerolog.New(output).
+		Level(logLevel).
+		With().
+		Timestamp().
+		CallerWithSkipFrameCount(zerolog.CallerSkipFrameCount + 3).
+		Logger()
+
+	return &Logger{logger: &configured}
+}
+
+func parseLevel(level string) zerolog.Level {
+	switch strings.ToLower(strings.TrimSpace(level)) {
 	case "debug":
-		log = zerolog.DebugLevel
+		return zerolog.DebugLevel
+	case "info":
+		return zerolog.InfoLevel
+	case "warn":
+		return zerolog.WarnLevel
+	case "error":
+		return zerolog.ErrorLevel
 	default:
-		log = zerolog.InfoLevel
-	}
-
-	zerolog.SetGlobalLevel(log)
-
-	skipFrameCount := 3
-	logger := zerolog.New(os.Stdout).With().Timestamp().CallerWithSkipFrameCount(zerolog.CallerSkipFrameCount + skipFrameCount).Logger()
-
-	return &Logger{
-		logger: &logger,
+		return zerolog.InfoLevel
 	}
 }
 
-// Debug -.
-func (logger *Logger) Debug(message interface{}, args ...interface{}) {
-	logger.msg("debug", message, args...)
+func (logger *Logger) Debug(message interface{}) {
+	logger.write(zerolog.DebugLevel, message)
 }
 
-// Info -.
-func (logger *Logger) Info(message string, args ...interface{}) {
-	logger.log(message, args...)
+func (logger *Logger) Info(message string) {
+	logger.write(zerolog.InfoLevel, message)
 }
 
-// Infof uses fmt.Sprintf to log a templated message.
 func (logger *Logger) Infof(template string, args ...interface{}) {
-	logger.log(template, args...)
+	logger.writef(zerolog.InfoLevel, template, args...)
 }
 
-// Warn -.
-func (logger *Logger) Warn(message string, args ...interface{}) {
-	logger.log(message, args...)
+func (logger *Logger) Warn(message string) {
+	logger.write(zerolog.WarnLevel, message)
 }
 
-// Warnf uses fmt.Sprintf to log a templated message.
 func (logger *Logger) Warnf(template string, args ...interface{}) {
-	logger.log(template, args...)
+	logger.writef(zerolog.WarnLevel, template, args...)
 }
 
-// Error -.
-func (logger *Logger) Error(message interface{}, args ...interface{}) {
-	if logger.logger.GetLevel() == zerolog.DebugLevel {
-		logger.Debug(message, args...)
-	}
-
-	logger.msg("error", message, args...)
+func (logger *Logger) Error(message interface{}) {
+	logger.write(zerolog.ErrorLevel, message)
 }
 
-// Errorf -.
 func (logger *Logger) Errorf(template string, args ...interface{}) {
-	if logger.logger.GetLevel() == zerolog.DebugLevel {
-		logger.Debug(template, args...)
-	}
-
-	logger.msg("error", template, args...)
+	logger.writef(zerolog.ErrorLevel, template, args...)
 }
 
-// Fatal -.
-func (logger *Logger) Fatal(message interface{}, args ...interface{}) {
-	logger.msg("fatal", message, args...)
-
+func (logger *Logger) Fatal(message interface{}) {
+	logger.write(zerolog.FatalLevel, message)
 	os.Exit(1)
 }
 
-func (logger *Logger) log(message string, args ...interface{}) {
-	if len(args) == 0 {
-		logger.logger.Info().Msg(message)
-	} else {
-		logger.logger.Info().Msgf(message, args...)
-	}
-}
-func (logger *Logger) KafkaProcessMessage(topic string, partition int, message []byte, workerID int, offset int64, time time.Time) {
+func (logger *Logger) KafkaProcessMessage(
+	topic string,
+	partition int,
+	message []byte,
+	workerID int,
+	offset int64,
+	messageTime time.Time,
+) {
 	logger.logger.Info().
 		Str(constants.Topic, topic).
 		Int(constants.Partition, partition).
 		Int(constants.MessageSize, len(message)).
 		Int(constants.WorkerID, workerID).
 		Int64(constants.Offset, offset).
-		Time(constants.Time, time).
-		Msg("(Processing Kafka message)")
+		Time(constants.Time, messageTime).
+		Msg("processing Kafka message")
 }
 
 func (logger *Logger) KafkaLogCommittedMessage(topic string, partition int, offset int64) {
-	logger.logger.Debug().Str(constants.Topic, topic).
+	logger.logger.Debug().
+		Str(constants.Topic, topic).
 		Int(constants.Partition, partition).
 		Int64(constants.Offset, offset).
-		Msg("(Committed Kafka message)")
+		Msg("committed Kafka message")
 }
 
-func (logger *Logger) msg(level string, message interface{}, args ...interface{}) {
-	switch msg := message.(type) {
+func (logger *Logger) write(level zerolog.Level, message interface{}) {
+	logger.logger.WithLevel(level).Msg(messageText(message))
+}
+
+func (logger *Logger) writef(level zerolog.Level, template string, args ...interface{}) {
+	logger.logger.WithLevel(level).Msgf(template, args...)
+}
+
+func messageText(message interface{}) string {
+	switch value := message.(type) {
 	case error:
-		logger.log(msg.Error(), args...)
+		return value.Error()
 	case string:
-		logger.log(msg, args...)
+		return value
 	default:
-		logger.log(fmt.Sprintf("%s message %v has unknown type %v", level, message, msg), args...)
+		return fmt.Sprintf("%v", value)
 	}
 }

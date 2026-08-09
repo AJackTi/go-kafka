@@ -3,12 +3,13 @@ package usecase
 import (
 	"context"
 
+	"github.com/google/uuid"
+
 	"github.com/AJackTi/go-kafka/internal/aggregate"
 	"github.com/AJackTi/go-kafka/internal/domain"
 	"github.com/AJackTi/go-kafka/internal/entity"
 	internalEvent "github.com/AJackTi/go-kafka/internal/events"
 	"github.com/AJackTi/go-kafka/pkg/es"
-	"github.com/google/uuid"
 )
 
 type TaskUseCase struct {
@@ -101,7 +102,6 @@ func (uc *TaskUseCase) UpdateTask(ctx context.Context, id string, request *Updat
 	return nil
 }
 
-
 // DeleteTask - Delete task.
 func (uc *TaskUseCase) DeleteTask(ctx context.Context, id string) error {
 	// Push to Kafka
@@ -110,7 +110,7 @@ func (uc *TaskUseCase) DeleteTask(ctx context.Context, id string) error {
 		ID: id,
 	}
 	taskDeletedEvent := &internalEvent.TaskDeletedEventV1{
-		ID:          id,
+		ID: id,
 	}
 	event, err := uc.eventSerializer.SerializeEvent(taskAggregate, taskDeletedEvent)
 	if err != nil {

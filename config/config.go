@@ -2,78 +2,134 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
+const DefaultPath = "config/config.yml"
+
 type (
-	// Config -.
 	Config struct {
-		App                  `yaml:"app"`
-		HTTP                 `yaml:"http"`
-		Log                  `yaml:"logger"`
-		PG                   `yaml:"postgres"`
-		MYSQL                `yaml:"mysql"`
-		Kafka                `yaml:"kafka"`
-		KafkaPublisherConfig `yaml:"kafkaPublisherConfig"`
+		App    App                  `yaml:"app"`
+		HTTP   HTTP                 `yaml:"http"`
+		Log    Log                  `yaml:"logger"`
+		MySQL  MySQL                `yaml:"mysql"`
+		Kafka  Kafka                `yaml:"kafka"`
+		Events KafkaPublisherConfig `yaml:"kafkaPublisherConfig"`
 	}
 
-	// App -.
 	App struct {
-		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`
-		Env     string `env-required:"true" yaml:"env"     env:"APP_ENV"`
-		Version string `env-required:"true" yaml:"version" env:"APP_VERSION"`
+		Name    string `yaml:"name" env:"APP_NAME"`
+		Env     string `yaml:"env" env:"APP_ENV"`
+		Version string `yaml:"version" env:"APP_VERSION"`
 	}
 
-	// HTTP -.
 	HTTP struct {
-		Port string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
-		Cors *bool  `env-required:"true" yaml:"cors" env:"HTTP_CORS"`
+		Port string `yaml:"port" env:"HTTP_PORT"`
+		Cors bool   `yaml:"cors" env:"HTTP_CORS"`
 	}
 
-	// Log -.
 	Log struct {
-		Level string `env-required:"true" yaml:"logLevel"   env:"LOG_LEVEL"`
+		Level string `yaml:"logLevel" env:"LOG_LEVEL"`
 	}
 
-	// PG -.
-	PG struct {
-		PoolMax int    `env-required:"true" yaml:"poolMax" env:"PG_POOL_MAX"`
-		URL     string `env-required:"true"                 env:"PG_URL"`
-	}
-
-	// MYSQL -.
-	MYSQL struct {
-		URL string `env-required:"true"        yaml:"url"         env:"MYSQL_URL"`
+	MySQL struct {
+		URL string `yaml:"url" env:"MYSQL_URL"`
 	}
 
 	Kafka struct {
-		Brokers    []string `env-required:"true" yaml:"brokers" env:"BROKERS"`
-		GroupID    string   `env-required:"true" yaml:"groupID" env:"BROKERS"`
-		InitTopics bool     `env-required:"true" yaml:"initTopics" env:"INIT_TOPICS"`
+		Brokers    []string `yaml:"brokers" env:"BROKERS" env-separator:","`
+		GroupID    string   `yaml:"groupID" env:"GROUP_ID"`
+		InitTopics bool     `yaml:"initTopics" env:"INIT_TOPICS"`
 	}
 
 	KafkaPublisherConfig struct {
-		Topic             string `env-required:"true" yaml:"topic" 				env:"TOPIC"`
-		TopicPrefix       string `env-required:"true" yaml:"topicPrefix" 		env:"TOPIC_PREFIX"`
-		Partitions        int    `env-required:"true" yaml:"partitions" 		env:"PARTITIONS"`
-		ReplicationFactor int    `env-required:"true" yaml:"replicationFactor"  env:"REPLICATION_FACTOR"`
+		Topic             string `yaml:"topic" env:"TOPIC"`
+		TopicPrefix       string `yaml:"topicPrefix" env:"TOPIC_PREFIX"`
+		Partitions        int    `yaml:"partitions" env:"PARTITIONS"`
+		ReplicationFactor int    `yaml:"replicationFactor" env:"REPLICATION_FACTOR"`
 	}
 )
 
-// NewConfig returns app config.
 func NewConfig() (*Config, error) {
-	cfg := &Config{}
-
-	err := cleanenv.ReadConfig("../../config/config.yml", cfg)
-	if err != nil {
-		return nil, fmt.Errorf("config error: %w", err)
+	path := strings.TrimSpace(os.Getenv("CONFIG_FILE"))
+	if path == "" {
+		path = DefaultPath
 	}
 
-	err = cleanenv.ReadEnv(cfg)
-	if err != nil {
+	return Load(path)
+}
+
+func Load(path string) (*Config, error) {
+	var cfg Config
+	if err := cleanenv.ReadConfig(path, &cfg); err != nil {
+		return nil, fmt.Errorf("read config %q: %w", path, err)
+	}
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		return nil, fmt.Errorf("read config environment: %w", err)
+	}
+	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
 
-	return cfg, nil
+	return &cfg, nil
+}
+
+func (cfg Config) Validate() error {
+	switch {
+	case strings.TrimSpace(cfg.App.Name) == "":
+		return fmt.Errorf("validate config: app name is required")
+	case strings.TrimSpace(cfg.App.Env) == "":
+		return fmt.Errorf("validate config: app environment is required")
+	case strings.TrimSpace(cfg.App.Version) == "":
+		return fmt.Errorf("validate config: app version is required")
+	case !validPort(cfg.HTTP.Port):
+		return fmt.Errorf("validate config: http port must be between 1 and 65535")
+	case !validLogLevel(cfg.Log.Level):
+		return fmt.Errorf("validate config: log level must be debug, info, warn, or error")
+	case strings.TrimSpace(cfg.MySQL.URL) == "":
+		return fmt.Errorf("validate config: mysql url is required")
+	case len(cfg.Kafka.Brokers) == 0:
+		return fmt.Errorf("validate config: kafka brokers are required")
+	case hasBlank(cfg.Kafka.Brokers):
+		return fmt.Errorf("validate config: kafka brokers cannot contain blanks")
+	case strings.TrimSpace(cfg.Kafka.GroupID) == "":
+		return fmt.Errorf("validate config: kafka group id is required")
+	case strings.TrimSpace(cfg.Events.Topic) == "":
+		return fmt.Errorf("validate config: kafka topic is required")
+	case strings.TrimSpace(cfg.Events.TopicPrefix) == "":
+		return fmt.Errorf("validate config: kafka topic prefix is required")
+	case cfg.Events.Partitions < 1:
+		return fmt.Errorf("validate config: kafka partitions must be at least 1")
+	case cfg.Events.ReplicationFactor < 1:
+		return fmt.Errorf("validate config: kafka replication factor must be at least 1")
+	default:
+		return nil
+	}
+}
+
+func validPort(value string) bool {
+	port, err := strconv.Atoi(strings.TrimSpace(value))
+	return err == nil && port > 0 && port <= 65535
+}
+
+func validLogLevel(value string) bool {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "debug", "info", "warn", "error":
+		return true
+	default:
+		return false
+	}
+}
+
+func hasBlank(values []string) bool {
+	for _, value := range values {
+		if strings.TrimSpace(value) == "" {
+			return true
+		}
+	}
+	return false
 }

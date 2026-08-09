@@ -1,137 +1,65 @@
-linters-settings:
-  gci:
-    local-prefixes: github.com/AJackTi/go-kafka
-  dupl:
-    threshold: 100
-  errorlint:
-    errorf: true
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-  exhaustive:
-    check-generated: false
-    default-signifies-exhaustive: false
-  funlen:
-    lines: 65
-    statements: 40
-  gocognit:
-    min-complexity: 15
-  gocyclo:
-    min-complexity: 10
-  goconst:
-    min-len: 2
-    min-occurrences: 2
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - dupImport
-      - unnecessaryBlock
-  gofumpt:
-    extra-rules: true
-  gomnd:
-    settings:
-      mnd:
-        checks:
-          - argument
-          - case
-          - condition
-          - operation
-          - return
-  govet:
-    check-shadowing: true
-  misspell:
-    locale: US
-  nestif:
-    min-complexity: 4
-  nolintlint:
-    require-explanation: true
-    require-specific: true
+version: "2"
+
+run:
+  timeout: 5m
 
 linters:
-  disable-all: true
+  default: none
   enable:
-    - asciicheck
     - bodyclose
-    - cyclop
-    - deadcode
-    - depguard
-    - dogsled
-    - dupl
     - durationcheck
     - errcheck
     - errorlint
     - exhaustive
-    - exportloopref
-    - forbidigo
-    - funlen
-    - gci
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
-    - goconst
     - gocritic
-    - gocyclo
-    - godot
-    - godox
-    - goerr113
-    - gofmt
-    - gofumpt
-    - goimports
-    - gomnd
-    - gomodguard
-    - goprintffuncname
     - gosec
-    - gosimple
     - govet
     - ineffassign
-    - makezero
     - misspell
-    - nakedret
-    - nestif
-    - nlreturn
     - noctx
     - nolintlint
-    - paralleltest
-    - predeclared
-    - revive
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
-    - structcheck
-    - stylecheck
-    - tparallel
-    - thelper
-    - typecheck
     - unconvert
-    - unparam
     - unused
-    - varcheck
-    - wsl
-    - whitespace
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    govet:
+      enable:
+        - shadow
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+  exclusions:
+    generated: strict
+    presets:
+      - common-false-positives
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 
-# disable:
-#    - exhaustivestruct
-#    - ifshort
-#    - goheader
-#    - prealloc
-#    - testpackage
-#    - wrapcheck
-
-issues:
-  exclude-rules:
-    - path: integration-test
-      linters:
-        - paralleltest
-        - godot
-    - path: internal/controller/http
-      linters:
-        - godot
-
-run:
-  skip-dirs:
-    - docs
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/AJackTi/go-kafka)
+      custom-order: true
+    gofumpt:
+      module-path: github.com/AJackTi/go-kafka
+      extra-rules: true
+  exclusions:
+    generated: strict
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

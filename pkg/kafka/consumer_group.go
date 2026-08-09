@@ -4,10 +4,11 @@ import (
 	"context"
 	"sync"
 
-	"github.com/AJackTi/go-kafka/pkg/logger"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/compress"
 	errGroup "golang.org/x/sync/errgroup"
+
+	"github.com/AJackTi/go-kafka/pkg/logger"
 )
 
 // MessageProcessor processor methods must implement kafka.Worker func method interface
@@ -25,7 +26,7 @@ type WorkerErrGroup func(ctx context.Context, r *kafka.Reader, workerID int) err
 type ConsumerGroup interface {
 	ConsumeTopic(ctx context.Context, groupTopics []string, poolSize int, worker Worker)
 	ConsumeTopicWithErrGroup(ctx context.Context, groupTopics []string, poolSize int, worker WorkerErrGroup) error
-	GetNewKafkaReader(kafkaURL []string, groupTopics []string, groupID string) *kafka.Reader
+	GetNewKafkaReader(kafkaURL, groupTopics []string, groupID string) *kafka.Reader
 	GetNewKafkaWriter() *kafka.Writer
 }
 
@@ -41,7 +42,7 @@ func NewConsumerGroup(brokers []string, groupID string, log logger.Logger) *cons
 }
 
 // GetNewKafkaReader create new kafka reader
-func (c *consumerGroup) GetNewKafkaReader(kafkaURL []string, groupTopics []string, groupID string) *kafka.Reader {
+func (c *consumerGroup) GetNewKafkaReader(kafkaURL, groupTopics []string, groupID string) *kafka.Reader {
 	return kafka.NewReader(kafka.ReaderConfig{
 		Brokers:                kafkaURL,
 		GroupID:                groupID,
@@ -77,11 +78,11 @@ func (c *consumerGroup) ConsumeTopic(ctx context.Context, groupTopics []string, 
 
 	defer func() {
 		if err := r.Close(); err != nil {
-			c.log.Warn("consumerGroup.r.Close: %v", err)
+			c.log.Warnf("consumerGroup.r.Close: %v", err)
 		}
 	}()
 
-	c.log.Info("(Starting consumer groupID): GroupID %s, topic: %+v, poolSize: %v", c.GroupID, groupTopics, poolSize)
+	c.log.Infof("(Starting consumer groupID): GroupID %s, topic: %+v, poolSize: %v", c.GroupID, groupTopics, poolSize)
 
 	wg := &sync.WaitGroup{}
 	for i := 0; i <= poolSize; i++ {
@@ -97,11 +98,11 @@ func (c *consumerGroup) ConsumeTopicWithErrGroup(ctx context.Context, groupTopic
 
 	defer func() {
 		if err := r.Close(); err != nil {
-			c.log.Warn("consumerGroup.r.Close: %v", err)
+			c.log.Warnf("consumerGroup.r.Close: %v", err)
 		}
 	}()
 
-	c.log.Info("(Starting ConsumeTopicWithErrGroup) GroupID: %s, topics: %+v, poolSize: %d", c.GroupID, groupTopics, poolSize)
+	c.log.Infof("(Starting ConsumeTopicWithErrGroup) GroupID: %s, topics: %+v, poolSize: %d", c.GroupID, groupTopics, poolSize)
 
 	g, ctx := errGroup.WithContext(ctx)
 	for i := 0; i <= poolSize; i++ {

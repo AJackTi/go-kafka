@@ -8,6 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+
 	"github.com/AJackTi/go-kafka/config"
 	http "github.com/AJackTi/go-kafka/internal/controller/http"
 	"github.com/AJackTi/go-kafka/internal/domain"
@@ -15,43 +18,49 @@ import (
 	"github.com/AJackTi/go-kafka/pkg/httpserver"
 	kafkaClient "github.com/AJackTi/go-kafka/pkg/kafka"
 	"github.com/AJackTi/go-kafka/pkg/logger"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 )
 
-// Run creates objects via constructors.
-func Run(cfg *config.Config) {
+// Run creates objects via constructors and supervises their lifecycle.
+func Run(cfg *config.Config) (runErr error) {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
-	logger := logger.New(cfg.Log.Level)
+	log := logger.New(cfg.Log.Level)
 
 	// Repository
-	// db, err := mysql.New(cfg.MYSQL.URL)
+	// db, err := mysql.New(cfg.MySQL.URL)
 	// if err != nil {
 	// 	logger.Fatal(fmt.Errorf("app - Run - mysql.New: %w", err))
 	// }
 	// defer db.Close()
 
 	// Kafka producer
-	kafkaProducer := kafkaClient.NewProducer(*logger, cfg.Kafka.Brokers)
-	defer kafkaProducer.Close()
+	kafkaProducer := kafkaClient.NewProducer(*log, cfg.Kafka.Brokers)
+	defer func() {
+		if closeErr := kafkaProducer.Close(); closeErr != nil && runErr == nil {
+			runErr = fmt.Errorf("app - Run - kafka producer close: %w", closeErr)
+		}
+	}()
 
 	// Kafka event serializer
 	eventSerializer := domain.NewEventSerializer()
 
 	eventBus := es.NewKafkaEventsBus(kafkaProducer, es.KafkaEventsBusConfig{
-		Topic:             cfg.Topic,
-		TopicPrefix:       cfg.TopicPrefix,
-		Partitions:        cfg.Partitions,
-		ReplicationFactor: cfg.ReplicationFactor,
+		Topic:             cfg.Events.Topic,
+		TopicPrefix:       cfg.Events.TopicPrefix,
+		Partitions:        cfg.Events.Partitions,
+		ReplicationFactor: cfg.Events.ReplicationFactor,
 	})
 
 	// Connect kafka brokers
 	kafkaConn, err := connectKafkaBrokers(ctx, cfg)
 	if err != nil {
-		logger.Fatal(fmt.Errorf("app - Run - connectKafkaBrokers: %w", err))
+		return fmt.Errorf("app - Run - connectKafkaBrokers: %w", err)
 	}
-	defer kafkaConn.Close() // nolint: errcheck
+	defer func() {
+		if closeErr := kafkaConn.Close(); closeErr != nil {
+			log.Errorf("app - Run - kafka close: %v", closeErr)
+		}
+	}()
 
 	// Init kafka topics
 	if cfg.Kafka.InitTopics {
@@ -63,11 +72,11 @@ func Run(cfg *config.Config) {
 
 	// middleware for all
 	// cors allow all origins
-	if *cfg.HTTP.Cors {
-		logger.Info("Set CORS for testing, please don't use it in production")
+	if cfg.HTTP.Cors {
+		log.Info("Set CORS for testing, please don't use it in production")
 		handler.Use(cors.Default())
 	}
-	http.NewRouter(cfg, handler, logger, eventSerializer, eventBus)
+	http.NewRouter(cfg, handler, log, eventSerializer, eventBus)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Kafka consumer
@@ -76,7 +85,7 @@ func Run(cfg *config.Config) {
 	// go func() {
 	// 	err := consumerGroup.ConsumeTopicWithErrGroup(
 	// 		ctx,
-	// 		getConsumerGroupTopics(cfg),
+	// 		[]string{GetTopicName(cfg.Events.TopicPrefix, "Task")},
 	// 		10,
 	// 		subscription.ProcessMessagesErrGroup,
 	// 	)
@@ -93,14 +102,22 @@ func Run(cfg *config.Config) {
 
 	select {
 	case s := <-interrupt:
-		logger.Info("app - Run - signal: " + s.String())
+		log.Infof("app - Run - signal: %s", s.String())
 	case err = <-httpServer.Notify():
-		logger.Error(fmt.Errorf("app - Run - httpServer.Notify: %w", err))
+		if err != nil {
+			runErr = fmt.Errorf("app - Run - httpServer.Notify: %w", err)
+		}
 	}
 
 	// Shutdown
 	err = httpServer.Shutdown()
 	if err != nil {
-		logger.Error(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
+		if runErr == nil {
+			runErr = fmt.Errorf("app - Run - httpServer.Shutdown: %w", err)
+		} else {
+			log.Error(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
+		}
 	}
+
+	return runErr
 }

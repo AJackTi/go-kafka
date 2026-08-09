@@ -6,15 +6,12 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/segmentio/kafka-go"
+
 	"github.com/AJackTi/go-kafka/config"
 	"github.com/AJackTi/go-kafka/pkg/constants"
 	kafkaClient "github.com/AJackTi/go-kafka/pkg/kafka"
 	"github.com/AJackTi/go-kafka/pkg/logger"
-	"github.com/segmentio/kafka-go"
-)
-
-const (
-	TaskAggregateType string = "Task"
 )
 
 // KafkaEventsBusConfig kafka eventbus config.
@@ -26,15 +23,15 @@ type KafkaEventsBusConfig struct {
 	Headers           []kafka.Header
 }
 
-func GetTopicName(eventStorePrefix string, aggregateType string) string {
+func GetTopicName(eventStorePrefix, aggregateType string) string {
 	return fmt.Sprintf("%s_%s", eventStorePrefix, aggregateType)
 }
 
 func connectKafkaBrokers(ctx context.Context, cfg *config.Config) (*kafka.Conn, error) {
 	kafkaConn, err := kafkaClient.NewKafkaConn(ctx, &kafkaClient.Config{
-		Brokers:    cfg.Brokers,
-		GroupID:    cfg.GroupID,
-		InitTopics: cfg.InitTopics,
+		Brokers:    cfg.Kafka.Brokers,
+		GroupID:    cfg.Kafka.GroupID,
+		InitTopics: cfg.Kafka.InitTopics,
 	})
 	if err != nil {
 		return nil, err
@@ -49,38 +46,42 @@ func connectKafkaBrokers(ctx context.Context, cfg *config.Config) (*kafka.Conn, 
 }
 
 func initKafkaTopics(ctx context.Context, cfg *config.Config, kafkaConn *kafka.Conn) {
-	logger := logger.New(cfg.Log.Level)
+	log := logger.New(cfg.Log.Level)
 	controller, err := kafkaConn.Controller()
 	if err != nil {
-		logger.Error("kafkaConn.Controller err: %v", err)
+		log.Errorf("kafkaConn.Controller err: %v", err)
 		return
 	}
 
 	controllerURI := net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port))
-	logger.Infof("(kafka controller uri) controllerURI: %s", controllerURI)
+	log.Infof("(kafka controller uri) controllerURI: %s", controllerURI)
 
 	conn, err := kafka.DialContext(ctx, constants.TCP, controllerURI)
 	if err != nil {
-		logger.Errorf("initKafkaTopics.DialContext err: %v", err)
+		log.Errorf("initKafkaTopics.DialContext err: %v", err)
 		return
 	}
-	defer conn.Close() // nolint: errcheck
+	defer func() {
+		if closeErr := conn.Close(); closeErr != nil {
+			log.Errorf("initKafkaTopics.Close: %v", closeErr)
+		}
+	}()
 
-	logger.Infof("(established new kafka controller connection) controllerURI: %s", controllerURI)
+	log.Infof("(established new kafka controller connection) controllerURI: %s", controllerURI)
 
 	taskAggregateTopic := GetKafkaAggregateTypeTopic(&KafkaEventsBusConfig{
-		Topic:             cfg.Topic,
-		TopicPrefix:       cfg.TopicPrefix,
-		Partitions:        cfg.Partitions,
-		ReplicationFactor: cfg.ReplicationFactor,
+		Topic:             cfg.Events.Topic,
+		TopicPrefix:       cfg.Events.TopicPrefix,
+		Partitions:        cfg.Events.Partitions,
+		ReplicationFactor: cfg.Events.ReplicationFactor,
 	}, "Task")
 
 	if err := conn.CreateTopics(taskAggregateTopic); err != nil {
-		logger.Warn("kafkaConn.CreateTopics", err)
+		log.Warnf("kafkaConn.CreateTopics: %v", err)
 		return
 	}
 
-	logger.Infof("(kafka topics created or already exists): %+v", []kafka.TopicConfig{taskAggregateTopic})
+	log.Infof("(kafka topics created or already exists): %+v", []kafka.TopicConfig{taskAggregateTopic})
 }
 
 func GetKafkaAggregateTypeTopic(cfg *KafkaEventsBusConfig, aggregateType string) kafka.TopicConfig {
@@ -89,15 +90,4 @@ func GetKafkaAggregateTypeTopic(cfg *KafkaEventsBusConfig, aggregateType string)
 		NumPartitions:     cfg.Partitions,
 		ReplicationFactor: cfg.ReplicationFactor,
 	}
-}
-
-func getConsumerGroupTopics(cfg *config.Config) []string {
-	logger := logger.New(cfg.Log.Level)
-
-	topics := []string{
-		GetTopicName(cfg.KafkaPublisherConfig.TopicPrefix, TaskAggregateType),
-	}
-
-	logger.Infof("(Consumer Topics) topics: %+v", topics)
-	return topics
 }

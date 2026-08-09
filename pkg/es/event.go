@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/AJackTi/go-kafka/pkg/es/serializer"
-	uuid "github.com/satori/go.uuid"
 )
 
 // EventType is the type of any event, used as its unique identifier.
@@ -28,7 +29,7 @@ type Event struct {
 // NewBaseEvent new base Event constructor with configured EventID, Aggregate properties and Timestamp.
 func NewBaseEvent(aggregate Aggregate, eventType EventType) Event {
 	return Event{
-		EventID:       uuid.NewV4().String(),
+		EventID:       uuid.New().String(),
 		AggregateType: aggregate.GetType(),
 		AggregateID:   aggregate.GetID(),
 		Version:       aggregate.GetVersion(),
@@ -37,9 +38,9 @@ func NewBaseEvent(aggregate Aggregate, eventType EventType) Event {
 	}
 }
 
-func NewEvent(aggregate Aggregate, eventType EventType, data []byte, metadata []byte) Event {
+func NewEvent(aggregate Aggregate, eventType EventType, data, metadata []byte) Event {
 	return Event{
-		EventID:       uuid.NewV4().String(),
+		EventID:       uuid.New().String(),
 		AggregateID:   aggregate.GetID(),
 		EventType:     eventType,
 		AggregateType: aggregate.GetType(),
@@ -124,7 +125,6 @@ func (e *Event) GetMetadata() []byte {
 
 // SetMetadata add app-specific metadata serialized as json for the Event.
 func (e *Event) SetMetadata(metaData interface{}) error {
-
 	metaDataBytes, err := serializer.Marshal(metaData)
 	if err != nil {
 		return err

@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/AJackTi/go-kafka/internal/usecase"
 	"github.com/AJackTi/go-kafka/pkg/logger"
-	"github.com/gin-gonic/gin"
 )
 
 type taskRoutes struct {
@@ -56,7 +57,7 @@ type RequestUpdateTask struct {
 func (r *taskRoutes) CreateTask(c *gin.Context) {
 	var request RequestCreateTask
 	if err := c.BindJSON(&request); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		errorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -68,7 +69,7 @@ func (r *taskRoutes) CreateTask(c *gin.Context) {
 		Status:      request.Status,
 	})
 	if err != nil {
-		r.logger.Error(err, "http - v1 - create_task")
+		r.logger.Errorf("http - v1 - create task: %v", err)
 		errorResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
@@ -102,13 +103,13 @@ func (r *taskRoutes) List(c *gin.Context) {
 func (r *taskRoutes) UpdateTask(c *gin.Context) {
 	taskID := c.Param("id")
 	if taskID == "" {
-		c.AbortWithError(http.StatusBadRequest, errors.New("invalid request"))
+		errorResponse(c, http.StatusBadRequest, errors.New("invalid request").Error())
 		return
 	}
 
 	var request RequestUpdateTask
 	if err := c.BindJSON(&request); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		errorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -120,7 +121,7 @@ func (r *taskRoutes) UpdateTask(c *gin.Context) {
 		Status:      request.Status,
 	})
 	if err != nil {
-		r.logger.Error(err, "http - v1 - update_task")
+		r.logger.Errorf("http - v1 - update task: %v", err)
 		errorResponse(c, http.StatusInternalServerError, err.Error())
 
 		return
@@ -141,12 +142,12 @@ func (r *taskRoutes) UpdateTask(c *gin.Context) {
 func (r *taskRoutes) DeleteTask(c *gin.Context) {
 	taskID := c.Param("id")
 	if taskID == "" {
-		c.AbortWithError(http.StatusBadRequest, errors.New("invalid request"))
+		errorResponse(c, http.StatusBadRequest, errors.New("invalid request").Error())
 		return
 	}
 	err := r.taskUc.DeleteTask(c.Request.Context(), taskID)
 	if err != nil {
-		r.logger.Error(err, "http - v1 - delete_task")
+		r.logger.Errorf("http - v1 - delete task: %v", err)
 		errorResponse(c, http.StatusInternalServerError, err.Error())
 
 		return

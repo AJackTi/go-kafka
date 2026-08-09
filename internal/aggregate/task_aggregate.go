@@ -12,9 +12,7 @@ const (
 	TaskAggregateType es.AggregateType = "Task"
 )
 
-var (
-	ErrUnknownEventType = errors.New("unknown event type")
-)
+var ErrUnknownEventType = errors.New("unknown event type")
 
 // TaskAggregate
 type TaskAggregate struct {

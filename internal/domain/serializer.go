@@ -8,12 +8,9 @@ import (
 	"github.com/AJackTi/go-kafka/pkg/es/serializer"
 )
 
-var (
-	ErrInvalidEvent = errors.New("invalid event")
-)
+var ErrInvalidEvent = errors.New("invalid event")
 
-type EventSerializer struct {
-}
+type EventSerializer struct{}
 
 func NewEventSerializer() *EventSerializer {
 	return &EventSerializer{}
@@ -36,7 +33,6 @@ func (s *EventSerializer) SerializeEvent(aggregate es.Aggregate, event any) (es.
 	default:
 		return es.Event{}, err
 	}
-
 }
 
 func (s *EventSerializer) DeserializeEvent(event es.Event) (any, error) {

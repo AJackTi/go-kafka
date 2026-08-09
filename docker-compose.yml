@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   kafka-ui:
     container_name: kafka-ui
@@ -167,19 +166,6 @@ services:
     networks:
       - go-kafka
 
-  # postgres:
-  #   container_name: postgres
-  #   image: postgres:16.1
-  #   volumes:
-  #     - pg-data:/var/lib/postgresql/data
-  #   environment:
-  #     POSTGRES_USER: "user"
-  #     POSTGRES_PASSWORD: "pass"
-  #     POSTGRES_DB: "postgres"
-  #   ports:
-  #     - 5432:5432
-  #   restart: unless-stopped
-
   # mysql:
   #   image: mysql:8.3
   #   container_name: mysql
@@ -265,30 +251,6 @@ services:
     depends_on:
       - elastic
     restart: unless-stopped
-
-  # app:
-  #   build: .
-  #   container_name: app
-  #   image: app
-  #   environment:
-  #     PG_URL: "postgres://user:pass@postgres:5432/postgres"
-  #   ports:
-  #     - 8080:8080
-  #   depends_on:
-  #     - postgres
-  #   restart: unless-stopped
-
-  # integration:
-  #   build:
-  #     context: .
-  #     dockerfile: integration-test/Dockerfile
-  #   container_name: integration
-  #   image: integration
-  #   depends_on:
-  #     - app
-
-# volumes:
-#   pg-data:
 
 networks:
   go-kafka:

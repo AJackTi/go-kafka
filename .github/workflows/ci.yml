@@ -1,79 +1,208 @@
 name: CI
-on: pull_request
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: local
+  GOLANGCI_LINT_VERSION: v2.12.2
 
 jobs:
-  golangci-lint:
-    name: runner / golangci-lint
-    runs-on: ubuntu-latest
+  lint:
+    name: Go lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v7
-      - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2
-
-  yamllint:
-    name: runner / yamllint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: reviewdog/action-yamllint@v1
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
         with:
-          fail_on_error: true
-          reporter: github-pr-review
-          yamllint_flags: '-d "{extends: default, rules: {truthy: disable}}" .'
+          egress-policy: audit
 
-  hadolint:
-    name: runner / hadolint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: reviewdog/action-hadolint@v1
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
-          fail_on_error: true
-          reporter: github-pr-review
+          persist-credentials: false
 
-  dotenv-linter:
-    name: runner / dotenv-linter
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: dotenv-linter/action-dotenv-linter@v3
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
         with:
-          reporter: github-pr-review
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+          check-latest: false
 
-  check-dependencies:
-    name: runner / check-dependencies
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
-      - name: WriteGoList
-        run: go list -json -m all > go.list
-      - name: Nancy
-        uses: sonatype-nexus-community/nancy-github-action@main
-        continue-on-error: true
+      - name: Verify module metadata
+        run: |
+          go mod tidy -diff
+          go mod verify
 
-  tests:
-    name: runner / tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@d583c34f0599d37dbac4a198b9c83201be380893  # v9.3.0
         with:
-          go-version: 1.17
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
+          args: --timeout=5m
 
-      - name: Unit Tests
-        run: "go test \
-          -v \
-          -race \
-          -covermode atomic \
-          -coverprofile=coverage.txt \
-          ./internal/..."
-      - name: Upload coverage report
-        run: bash <(curl -s https://codecov.io/bash)
+  test:
+    name: Go tests and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+        with:
+          egress-policy: audit
 
-      - name: Integration tests
-        run: "docker-compose up \
-          --build \
-          --abort-on-container-exit \
-          --exit-code-from integration"
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+          check-latest: false
+
+      - name: Run tests with race detector
+        run: |
+          go vet ./...
+          go test -count=1 -race -shuffle=on -covermode=atomic -coverprofile=coverage.out ./...
+
+      - name: Verify build
+        run: |
+          CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o "$RUNNER_TEMP/go-kafka-app" ./cmd/app
+          CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o "$RUNNER_TEMP/go-kafka-migrate" ./cmd/migrate
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: go-coverage
+          path: coverage.out
+          if-no-files-found: error
+          retention-days: 7
+
+  security:
+    name: Security and workflow checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+        with:
+          egress-policy: audit
+
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+          check-latest: false
+
+      - name: Verify action pins
+        uses: zgosalvez/github-actions-ensure-sha-pinned-actions@c5fc58bd0be7a4b94b73ce40250322d5b838a108  # v5.0.7
+
+      - name: Run actionlint
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+
+      - name: Run govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
+
+  static-files:
+    name: Static file checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+        with:
+          egress-policy: audit
+
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Lint YAML
+        uses: reviewdog/action-yamllint@de68272fdca5f2a961fb309e0d2e13c2eb186d9e  # v1
+        with:
+          reporter: local
+          filter_mode: nofilter
+          fail_level: error
+          yamllint_flags: '-c .yamllint.yml .github config docker-compose.yml .golangci.yml'
+
+      - name: Lint Dockerfiles
+        uses: hadolint/hadolint-action@2a66e89f53d0771bb131a7fa31f3136336094aa6  # v3.4.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: error
+
+      - name: Lint migration Dockerfile
+        uses: hadolint/hadolint-action@2a66e89f53d0771bb131a7fa31f3136336094aa6  # v3.4.0
+        with:
+          dockerfile: Dockerfile.migrate
+          failure-threshold: error
+
+      - name: Lint integration Dockerfile
+        uses: hadolint/hadolint-action@2a66e89f53d0771bb131a7fa31f3136336094aa6  # v3.4.0
+        with:
+          dockerfile: integration-test/Dockerfile
+          failure-threshold: error
+
+      - name: Validate Dockerfiles
+        run: |
+          docker build --check .
+          docker build --check --file Dockerfile.migrate .
+          docker build --check --file integration-test/Dockerfile .
+
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+
+      - name: Build application image
+        run: docker build --pull --tag go-kafka:ci .
+
+      - name: Build migration image
+        run: docker build --pull --file Dockerfile.migrate --tag go-kafka-migrate:ci .
+
+      - name: Validate dotenv example
+        run: python3 scripts/validate_env.py .env.example
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+        with:
+          egress-policy: audit
+
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294  # v5.0.0
+        with:
+          fail-on-severity: high
