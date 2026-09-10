@@ -23,7 +23,7 @@ env:
   # Keep CI on the patched toolchain. `go-version-file` would select the
   # module's minimum Go version (1.25.0), whose standard library is no longer
   # current enough for the security gate.
-  GO_VERSION: 1.26.5
+  GO_VERSION: 1.26.6
   GOLANGCI_LINT_VERSION: v2.12.2
 
 jobs:

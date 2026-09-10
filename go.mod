@@ -2,7 +2,7 @@ module github.com/AJackTi/go-kafka
 
 go 1.25.0
 
-toolchain go1.26.5
+toolchain go1.26.6
 
 require (
 	github.com/gin-contrib/cors v1.7.7
