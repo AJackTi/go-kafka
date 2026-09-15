@@ -1,13 +1,13 @@
 module github.com/AJackTi/go-kafka
 
-go 1.25.0
+go 1.25.11
 
 toolchain go1.26.6
 
 require (
 	github.com/gin-contrib/cors v1.7.7
 	github.com/gin-gonic/gin v1.12.0
-	github.com/golang-migrate/migrate/v4 v4.19.1
+	github.com/golang-migrate/migrate/v4 v4.20.1
 	github.com/google/uuid v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/json-iterator/go v1.1.12
