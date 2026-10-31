@@ -20,10 +20,9 @@ concurrency:
 
 env:
   GOTOOLCHAIN: local
-  # Keep CI on the patched toolchain. `go-version-file` would select the
-  # module's minimum Go version (1.25.0), whose standard library is no longer
-  # current enough for the security gate.
-  GO_VERSION: 1.26.6
+  # Keep CI pinned to the patched Go 1.26.10 toolchain required by go.mod and
+  # the security gate.
+  GO_VERSION: 1.26.10
   GOLANGCI_LINT_VERSION: v2.12.2
 
 jobs:
