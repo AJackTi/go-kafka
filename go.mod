@@ -3,7 +3,7 @@ module github.com/AJackTi/go-kafka
 go 1.26.10
 
 require (
-	github.com/gin-contrib/cors v1.7.9
+	github.com/gin-contrib/cors v1.7.10
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-migrate/migrate/v4 v4.20.1
 	github.com/google/uuid v1.6.0
