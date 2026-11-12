@@ -20,9 +20,9 @@ concurrency:
 
 env:
   GOTOOLCHAIN: local
-  # Keep CI pinned to the patched Go 1.26.10 toolchain required by go.mod and
+  # Keep CI pinned to the patched Go 1.26.11 toolchain required by go.mod and
   # the security gate.
-  GO_VERSION: 1.26.10
+  GO_VERSION: 1.26.11
   GOLANGCI_LINT_VERSION: v2.12.2
 
 jobs:
